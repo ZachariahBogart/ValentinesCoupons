@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Calculus 1 Study Dashboard</title>
+    <title>Calculus 1 Interactive Study App</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.0.1/dist/chartjs-plugin-annotation.min.js"></script>
@@ -16,719 +16,618 @@
             }
         };
     </script>
-    <!-- Load MathJax -->
     <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js" id="MathJax-script" async></script>
 
-    <!-- Chosen Palette: Calm Harmony (Warm neutrals with green/blue accents) -->
     <style>
-        body {
-            font-family: 'Inter', sans-serif;
-        }
+        body { font-family: 'Inter', sans-serif; }
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
         
-        .chart-container {
-            position: relative;
-            width: 100%;
-            height: 250px; 
-            margin: 0 auto;
-        }
+        .content-view { display: none; opacity: 0; transition: opacity 0.3s ease-in-out; }
+        .content-view.active { display: block; opacity: 1; }
         
-        /* Navigation Styles */
-        .nav-btn {
-            @apply w-full text-left px-4 py-3 rounded-lg font-medium transition-all duration-200 flex items-center justify-between mb-2;
-        }
-        .nav-btn.active {
-            @apply bg-blue-600 text-white shadow-lg ring-2 ring-blue-300 ring-opacity-50;
-        }
-        .nav-btn:not(.active) {
-            @apply text-gray-600 hover:bg-blue-50 hover:text-blue-700;
-        }
-        
-        /* Section Visibility */
-        .content-section {
-            @apply hidden animate-fade-in;
-        }
-        .content-section.active {
-            @apply block;
-        }
+        .nav-item { @apply flex items-center px-4 py-3 text-gray-600 hover:bg-blue-50 hover:text-blue-700 rounded-lg transition-colors cursor-pointer mb-1; }
+        .nav-item.active { @apply bg-blue-600 text-white shadow-md hover:bg-blue-700 hover:text-white; }
 
-        /* Question Card Styles */
-        .question-card {
-            @apply bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-md transition-shadow duration-200 overflow-hidden;
-        }
-        .question-header {
-            @apply p-4 cursor-pointer flex justify-between items-center bg-gray-50 border-b border-gray-100;
-        }
-        .question-body {
-            @apply hidden p-5 bg-white text-gray-700 leading-relaxed;
-        }
+        .btn-option { @apply w-full text-left p-3 border rounded-lg mb-2 transition-all hover:bg-gray-50; }
+        .btn-option.correct { @apply bg-green-100 border-green-500 text-green-800; }
+        .btn-option.wrong { @apply bg-red-100 border-red-500 text-red-800 opacity-60; }
         
-        /* Concept Card Styles */
-        .concept-card {
-            @apply bg-white p-6 rounded-xl shadow-md border-l-4 sticky top-6;
-        }
-
-        @keyframes fade-in {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
+        .chart-wrapper { position: relative; height: 200px; width: 100%; }
     </style>
 </head>
-<body class="bg-gray-100 text-gray-900 h-screen overflow-hidden flex flex-col md:flex-row">
+<body class="bg-gray-50 h-screen flex flex-col md:flex-row overflow-hidden">
 
-    <!-- Sidebar Navigation -->
-    <aside class="w-full md:w-80 bg-white border-r border-gray-200 flex flex-col h-full shadow-xl z-10">
+    <!-- Sidebar -->
+    <aside class="w-full md:w-72 bg-white border-r border-gray-200 flex flex-col z-20 shadow-lg flex-shrink-0">
         <div class="p-6 border-b border-gray-100">
-            <h1 class="text-2xl font-bold text-gray-800">Calc 1 Exam Prep</h1>
-            <p class="text-xs text-gray-500 mt-1 uppercase tracking-wide font-semibold">48-Hour Crash Course</p>
+            <h1 class="text-xl font-bold text-gray-900 tracking-tight">Calc 1 Exam Prep</h1>
+            <p class="text-xs text-gray-500 uppercase tracking-wide font-semibold mt-1">Interactive Trainer</p>
         </div>
         
-        <div class="flex-1 overflow-y-auto p-4 space-y-1 custom-scrollbar">
-            <div class="mb-6">
-                <div class="relative h-48 w-full mb-2">
-                    <canvas id="topicChart"></canvas>
-                </div>
-                <p class="text-center text-xs text-gray-400">Points Breakdown</p>
+        <nav class="flex-1 overflow-y-auto p-4 custom-scrollbar">
+            <div class="nav-item active" onclick="app.navigate('overview')">
+                <span class="mr-3">📊</span> Dashboard
             </div>
+            <div class="my-4 border-t border-gray-100"></div>
+            <div class="nav-item" onclick="app.navigate('optimization')">
+                <span class="mr-3">🏆</span> Optimization
+            </div>
+            <div class="nav-item" onclick="app.navigate('ftc')">
+                <span class="mr-3">📜</span> FTC & Integrals
+            </div>
+            <div class="nav-item" onclick="app.navigate('substitution')">
+                <span class="mr-3">🔄</span> Substitution
+            </div>
+            <div class="nav-item" onclick="app.navigate('riemann')">
+                <span class="mr-3">📏</span> Riemann Sums
+            </div>
+            <div class="nav-item" onclick="app.navigate('antiderivatives')">
+                <span class="mr-3">↩️</span> Antiderivatives
+            </div>
+        </nav>
 
-            <button class="nav-btn active" data-target="overview">
-                <span>📊 Overview</span>
-            </button>
-            <div class="py-2"><hr class="border-gray-100"></div>
-            <button class="nav-btn" data-target="optimization">
-                <span>🏆 Optimization</span>
-                <span class="bg-blue-100 text-blue-800 text-xs px-2 py-0.5 rounded-full">30 pts</span>
-            </button>
-            <button class="nav-btn" data-target="ftc">
-                <span>📜 FTC & Integrals</span>
-                <span class="bg-green-100 text-green-800 text-xs px-2 py-0.5 rounded-full">32 pts</span>
-            </button>
-            <button class="nav-btn" data-target="substitution">
-                <span>🔄 Substitution Rule</span>
-                <span class="bg-amber-100 text-amber-800 text-xs px-2 py-0.5 rounded-full">22 pts</span>
-            </button>
-            <button class="nav-btn" data-target="riemann">
-                <span>📏 Riemann Sums</span>
-                <span class="bg-purple-100 text-purple-800 text-xs px-2 py-0.5 rounded-full">8 pts</span>
-            </button>
-            <button class="nav-btn" data-target="antiderivatives">
-                <span>↩️ Antiderivatives</span>
-                <span class="bg-gray-100 text-gray-800 text-xs px-2 py-0.5 rounded-full">8 pts</span>
-            </button>
+        <div class="p-4 bg-blue-50 border-t border-blue-100">
+            <div class="text-xs font-semibold text-blue-800 mb-2 uppercase">Total Mastery</div>
+            <div class="w-full bg-blue-200 rounded-full h-2.5">
+                <div id="sidebar-progress" class="bg-blue-600 h-2.5 rounded-full transition-all duration-500" style="width: 0%"></div>
+            </div>
+            <div class="text-right text-xs text-blue-800 mt-1 font-bold" id="sidebar-progress-text">0%</div>
         </div>
     </aside>
 
-    <!-- Main Content Area -->
-    <main class="flex-1 h-full overflow-y-auto bg-gray-50 p-6 md:p-10 relative custom-scrollbar">
+    <!-- Main Content -->
+    <main class="flex-1 h-full overflow-y-auto relative scroll-smooth p-4 md:p-8" id="main-container">
         
-        <!-- OVERVIEW SECTION -->
-        <section id="overview" class="content-section active max-w-5xl mx-auto">
+        <!-- VIEW: DASHBOARD OVERVIEW -->
+        <div id="overview" class="content-view active max-w-5xl mx-auto">
             <header class="mb-8">
-                <h2 class="text-3xl font-bold text-gray-900">Exam Strategy Overview</h2>
-                <p class="text-gray-600 mt-2">Your roadmap for the next 48 hours.</p>
+                <h2 class="text-3xl font-bold text-gray-900">Study Dashboard</h2>
+                <p class="text-gray-600">Track your progress across all exam topics.</p>
             </header>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-                <!-- Priority Stats -->
-                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-                    <h3 class="text-lg font-semibold text-gray-800 mb-4">🚨 High Priority Targets</h3>
-                    <div class="space-y-4">
-                        <div class="flex items-center justify-between p-3 bg-blue-50 rounded-lg border border-blue-100">
-                            <div>
-                                <div class="font-bold text-blue-900">Optimization</div>
-                                <div class="text-xs text-blue-600">Word problems & derivatives</div>
-                            </div>
-                            <div class="text-xl font-bold text-blue-700">30%</div>
-                        </div>
-                        <div class="flex items-center justify-between p-3 bg-green-50 rounded-lg border border-green-100">
-                            <div>
-                                <div class="font-bold text-green-900">FTC & Basic Integrals</div>
-                                <div class="text-xs text-green-600">Area under curve & evaluation</div>
-                            </div>
-                            <div class="text-xl font-bold text-green-700">32%</div>
-                        </div>
-                         <div class="flex items-center justify-between p-3 bg-amber-50 rounded-lg border border-amber-100">
-                            <div>
-                                <div class="font-bold text-amber-900">Substitution Rule</div>
-                                <div class="text-xs text-amber-600">Advanced integration</div>
-                            </div>
-                            <div class="text-xl font-bold text-amber-700">22%</div>
-                        </div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                <!-- Mastery Chart -->
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200 md:col-span-1">
+                    <h3 class="font-semibold text-gray-700 mb-4">Topic Mastery</h3>
+                    <div class="chart-wrapper">
+                        <canvas id="masteryChart"></canvas>
+                    </div>
+                    <div class="mt-4 text-center">
+                        <p class="text-3xl font-bold text-blue-600" id="total-score-display">0/14</p>
+                        <p class="text-xs text-gray-500">Questions Mastered</p>
                     </div>
                 </div>
 
-                <!-- Schedule -->
-                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-                    <h3 class="text-lg font-semibold text-gray-800 mb-4">📅 48-Hour Schedule</h3>
-                    <ul class="space-y-4 text-sm">
-                        <li class="flex gap-3">
-                            <span class="flex-shrink-0 w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center font-bold text-gray-600">1</span>
+                <!-- Priority List -->
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200 md:col-span-2">
+                    <h3 class="font-semibold text-gray-700 mb-4">Recommended Study Path</h3>
+                    <div class="space-y-3">
+                        <div onclick="app.navigate('optimization')" class="flex items-center justify-between p-4 bg-blue-50 rounded-lg border border-blue-100 cursor-pointer hover:bg-blue-100 transition">
                             <div>
-                                <span class="font-bold text-gray-900 block">Tonight: Mechanics</span>
-                                <span class="text-gray-600">Master Riemann Sums, Antiderivatives, and FTC. These are the building blocks.</span>
+                                <div class="font-bold text-blue-900">1. Optimization (30 pts)</div>
+                                <div class="text-xs text-blue-600">Word problems & graphs. High value.</div>
                             </div>
-                        </li>
-                        <li class="flex gap-3">
-                            <span class="flex-shrink-0 w-8 h-8 bg-blue-200 rounded-full flex items-center justify-center font-bold text-blue-700">2</span>
+                            <span class="text-2xl">👉</span>
+                        </div>
+                        <div onclick="app.navigate('ftc')" class="flex items-center justify-between p-4 bg-green-50 rounded-lg border border-green-100 cursor-pointer hover:bg-green-100 transition">
                             <div>
-                                <span class="font-bold text-gray-900 block">Wednesday: Heavy Hitters</span>
-                                <span class="text-gray-600">Tackle Optimization (Word Problems) and Substitution. These require the most brain power.</span>
+                                <div class="font-bold text-green-900">2. FTC & Integrals (32 pts)</div>
+                                <div class="text-xs text-green-600">Core mechanics. Largest section.</div>
                             </div>
-                        </li>
-                        <li class="flex gap-3">
-                            <span class="flex-shrink-0 w-8 h-8 bg-green-200 rounded-full flex items-center justify-center font-bold text-green-700">3</span>
+                            <span class="text-2xl">👉</span>
+                        </div>
+                         <div onclick="app.navigate('substitution')" class="flex items-center justify-between p-4 bg-amber-50 rounded-lg border border-amber-100 cursor-pointer hover:bg-amber-100 transition">
                             <div>
-                                <span class="font-bold text-gray-900 block">Thursday AM: Review</span>
-                                <span class="text-gray-600">Quick formula review and re-read the "Captain Efficiency" logic.</span>
+                                <div class="font-bold text-amber-900">3. Substitution (22 pts)</div>
+                                <div class="text-xs text-amber-600">Tricky integrals. Don't forget bounds!</div>
                             </div>
-                        </li>
-                    </ul>
+                            <span class="text-2xl">👉</span>
+                        </div>
+                    </div>
                 </div>
             </div>
-        </section>
-        
-        <!-- OPTIMIZATION SECTION -->
-        <section id="optimization" class="content-section max-w-6xl mx-auto">
-            <header class="mb-6 pb-4 border-b border-gray-200">
-                <h2 class="text-3xl font-bold text-blue-900">Optimization Problems</h2>
-                <p class="text-gray-600">Finding maximums and minimums in real-world scenarios.</p>
-            </header>
+        </div>
+
+        <!-- DYNAMIC TOPIC CONTAINER -->
+        <div id="topic-container" class="max-w-6xl mx-auto hidden">
+            <!-- Header -->
+            <div class="flex justify-between items-center mb-6 border-b pb-4">
+                <div>
+                    <h2 class="text-3xl font-bold text-gray-900" id="topic-title">Topic Title</h2>
+                    <p class="text-gray-600" id="topic-desc">Description</p>
+                </div>
+                <div class="text-right hidden md:block">
+                    <div class="text-sm font-semibold text-gray-500">Topic Progress</div>
+                    <div class="text-xl font-bold text-blue-600" id="topic-score">0/0</div>
+                </div>
+            </div>
 
             <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
-                <!-- Concept Column (Left) -->
+                <!-- LEFT: Concepts (Sticky) -->
                 <div class="lg:col-span-4">
-                    <div class="concept-card border-blue-500">
-                        <h3 class="font-bold text-xl text-blue-900 mb-4 flex items-center">
-                            <span class="text-2xl mr-2">💡</span> Key Concepts
+                    <div class="bg-white p-6 rounded-xl shadow-md border-l-4 sticky top-4" id="concept-card-style">
+                        <h3 class="font-bold text-xl mb-4 flex items-center" id="concept-title">
+                            💡 Key Concepts
                         </h3>
-                        <div class="space-y-4 text-sm text-gray-700">
-                            <div>
-                                <strong class="block text-gray-900 mb-1">The Protocol:</strong>
-                                <ol class="list-decimal list-inside space-y-1 pl-2">
-                                    <li>Draw a picture.</li>
-                                    <li><strong>Constraint:</strong> What is limited?</li>
-                                    <li><strong>Objective:</strong> What do you maximize/minimize?</li>
-                                    <li>Solve constraint for one variable.</li>
-                                    <li>Plug into Objective function.</li>
-                                    <li>Find derivative, set to 0.</li>
-                                    <li><strong>Verify:</strong> Check critical numbers & endpoints.</li>
-                                </ol>
-                            </div>
-                            <div class="bg-blue-50 p-3 rounded border border-blue-100">
-                                <strong class="text-blue-800">Derivative Tests:</strong>
-                                <ul class="mt-1 space-y-1">
-                                    <li>$f'(x)$ changes + to - $\to$ <strong>MAX</strong></li>
-                                    <li>$f'(x)$ changes - to + $\to$ <strong>MIN</strong></li>
-                                    <li>$f''(c) > 0$ (Concave Up) $\to$ <strong>MIN</strong></li>
-                                    <li>$f''(c) < 0$ (Concave Down) $\to$ <strong>MAX</strong></li>
-                                </ul>
-                            </div>
+                        <div class="space-y-4 text-sm text-gray-700 leading-relaxed" id="concept-content">
+                            <!-- Concepts injected here -->
                         </div>
                     </div>
                 </div>
 
-                <!-- Questions Column (Right) -->
-                <div class="lg:col-span-8 space-y-4">
-                    <h3 class="font-bold text-lg text-gray-700 mb-2">Practice Problems</h3>
-
-                    <!-- Q1 -->
-                    <div class="question-card">
-                        <div class="question-header group">
-                            <span class="font-semibold text-blue-900">Q1 (2 pts): Second Derivative Test Concept</span>
-                            <span class="text-gray-400 group-hover:text-blue-500 text-sm">Show/Hide Answer ▼</span>
-                        </div>
-                        <div class="question-body">
-                            <p class="mb-2 font-medium">True or False: If c is a critical number for $f(x)$ and $f''(c)=0,$ then $f(x)$ has neither a local maximum nor a local minimum at (c, f(c)).</p>
-                            <div class="mt-4 p-4 bg-green-50 rounded border border-green-100">
-                                <p><strong>Answer: (B) False</strong></p>
-                                <p class="text-sm mt-1">If $f''(c)=0$, the Second Derivative Test fails (is inconclusive). It does <em>not</em> mean there is no max/min. You must go back and use the First Derivative Test. <br><em>Example:</em> $f(x)=x^4$ at $x=0$. $f''(0)=0$, but it is a minimum.</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Q7 Graph -->
-                    <div class="question-card">
-                        <div class="question-header group">
-                            <span class="font-semibold text-blue-900">Q7 (4 pts): Graph Analysis</span>
-                            <span class="text-gray-400 group-hover:text-blue-500 text-sm">Show/Hide Answer ▼</span>
-                        </div>
-                        <div class="question-body">
-                            <p class="mb-2 font-medium">The graph of the derivative $y=f'(x)$ is shown. At which value of x does f have a local <strong>maximum</strong>?</p>
-                            <div class="chart-container h-64 mb-4">
-                                <canvas id="chartQ7"></canvas>
-                            </div>
-                            <div class="mt-4 p-4 bg-green-50 rounded border border-green-100">
-                                <p><strong>Answer: (D) $x=4$</strong></p>
-                                <p class="text-sm mt-1">A local maximum occurs when $f(x)$ goes from increasing to decreasing. This means $f'(x)$ must change from <strong>Positive to Negative</strong>. Look at the graph: the line crosses the x-axis from above to below exactly at $x=4$.</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Q24 Word Problem -->
-                    <div class="question-card border-blue-300 shadow-md">
-                        <div class="question-header group bg-blue-50">
-                            <span class="font-bold text-blue-900">Q24 (10 pts): "Captain Efficiency"</span>
-                            <span class="text-blue-600 text-sm font-semibold">Show/Hide Solution ▼</span>
-                        </div>
-                        <div class="question-body">
-                            <p class="mb-2 italic text-gray-600">Scenario: Minimize energy. Swimming costs 2x as much as running. Canal width $\sqrt{300}$. Run $x$, then swim to point 40m downstream.</p>
-                            
-                            <div class="space-y-3 mt-4">
-                                <div class="p-3 bg-gray-50 rounded border">
-                                    <strong>1. Variables:</strong>
-                                    <ul class="list-disc pl-5 text-sm">
-                                        <li>Run Distance: $x$</li>
-                                        <li>Remaining distance on bank: $40-x$</li>
-                                        <li>Swim Distance (Hypotenuse): $\sqrt{(\sqrt{300})^2 + (40-x)^2} = \sqrt{300 + (40-x)^2}$</li>
-                                    </ul>
-                                </div>
-                                <div class="p-3 bg-gray-50 rounded border">
-                                    <strong>2. Objective Function:</strong>
-                                    <p>$E(x) = (1 \cdot x) + (2 \cdot \text{Swim Distance})$</p>
-                                    <p>$E(x) = x + 2\sqrt{300 + (40-x)^2}$</p>
-                                </div>
-                                <div class="p-3 bg-gray-50 rounded border">
-                                    <strong>3. Derivative & Solve:</strong>
-                                    <p>$E'(x) = 1 + 2 \cdot \frac{1}{2\sqrt{...}} \cdot 2(40-x)(-1) = 0$</p>
-                                    <p>Simplify: $1 = \frac{2(40-x)}{\sqrt{300+(40-x)^2}}$</p>
-                                    <p>Square both sides: $300 + (40-x)^2 = 4(40-x)^2$</p>
-                                    <p>$300 = 3(40-x)^2 \implies 100 = (40-x)^2$</p>
-                                    <p>$10 = 40-x \implies x = 30$</p>
-                                </div>
-                            </div>
-                            <div class="mt-4 p-4 bg-green-50 rounded border border-green-100 text-center font-bold text-green-800">
-                                Final Answer: Run 30 meters.
-                            </div>
-                        </div>
-                    </div>
-
+                <!-- RIGHT: Interactive Questions -->
+                <div class="lg:col-span-8 space-y-6" id="questions-list">
+                    <!-- Questions injected here -->
                 </div>
             </div>
-        </section>
 
-        <!-- FTC SECTION -->
-        <section id="ftc" class="content-section max-w-6xl mx-auto">
-             <header class="mb-6 pb-4 border-b border-gray-200">
-                <h2 class="text-3xl font-bold text-green-900">FTC & Integrals</h2>
-                <p class="text-gray-600">Connecting derivatives and integrals.</p>
-            </header>
-
-            <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
-                <!-- Concept Column -->
-                <div class="lg:col-span-4">
-                    <div class="concept-card border-green-500">
-                        <h3 class="font-bold text-xl text-green-900 mb-4 flex items-center">
-                            <span class="text-2xl mr-2">📜</span> The Theorem
-                        </h3>
-                        <div class="space-y-4 text-sm text-gray-700">
-                            <div>
-                                <strong class="block text-gray-900 mb-1 border-b border-green-200 pb-1">Part 1: Derivative of Integral</strong>
-                                <p class="mb-1">$\frac{d}{dx} \int_a^x f(t) dt = f(x)$</p>
-                                <p class="text-xs text-gray-500">It just "cancels" the integral symbol.</p>
-                                <p class="mt-2 font-semibold text-green-700">With Chain Rule:</p>
-                                <p>$\frac{d}{dx} \int_a^{g(x)} f(t) dt = f(g(x)) \cdot g'(x)$</p>
-                            </div>
-                            <div>
-                                <strong class="block text-gray-900 mb-1 border-b border-green-200 pb-1">Part 2: Evaluation</strong>
-                                <p>$\int_a^b f(x) dx = F(b) - F(a)$</p>
-                                <p class="text-xs text-gray-500">Find antiderivative F, plug in top, subtract bottom.</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Questions Column -->
-                <div class="lg:col-span-8 space-y-4">
-                    
-                    <!-- Q11 -->
-                    <div class="question-card">
-                        <div class="question-header group">
-                            <span class="font-semibold text-green-900">Q11 (4 pts): FTC Part 1 Application</span>
-                             <span class="text-gray-400 group-hover:text-green-600 text-sm">Show/Hide Answer ▼</span>
-                        </div>
-                        <div class="question-body">
-                            <p class="mb-2 font-medium">Consider $g(x)=\int_{4}^{x}\frac{1}{1+t}dt$. What is $g'(2)$?</p>
-                            <div class="mt-4 p-4 bg-green-50 rounded border border-green-100">
-                                <p><strong>Answer: (C) 1/3</strong></p>
-                                <p class="text-sm mt-1">Using FTC Part 1, the derivative $g'(x)$ is simply the integrand evaluated at $x$.</p>
-                                <p class="text-sm">$g'(x) = \frac{1}{1+x}$</p>
-                                <p class="text-sm">$g'(2) = \frac{1}{1+2} = \frac{1}{3}$</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Q12 Graph -->
-                    <div class="question-card">
-                        <div class="question-header group">
-                            <span class="font-semibold text-green-900">Q12 (4 pts): Visualizing Integrals</span>
-                             <span class="text-gray-400 group-hover:text-green-600 text-sm">Show/Hide Answer ▼</span>
-                        </div>
-                        <div class="question-body">
-                            <p class="mb-2 font-medium">Evaluate $\int_{1}^{8}f(x)dx$ using the graph below.</p>
-                             <div class="chart-container h-64 mb-4">
-                                <canvas id="chartQ12"></canvas>
-                            </div>
-                            <div class="mt-4 p-4 bg-green-50 rounded border border-green-100">
-                                <p><strong>Answer: (C) -2</strong></p>
-                                <p class="text-sm mt-1">Calculate Area between curve and x-axis. <br><strong>Above axis = Positive. Below axis = Negative.</strong></p>
-                                <ul class="text-xs mt-2 list-disc pl-4">
-                                    <li>Area 1-3 (Above): Triangle + Trapezoid $\approx +2.5$</li>
-                                    <li>Area 3-7 (Below): Large region $\approx -5$</li>
-                                    <li>Area 7-8 (Above): Small triangle $\approx +0.5$</li>
-                                </ul>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Q15 -->
-                    <div class="question-card">
-                        <div class="question-header group">
-                            <span class="font-semibold text-green-900">Q15 (4 pts): Definite Integral</span>
-                             <span class="text-gray-400 group-hover:text-green-600 text-sm">Show/Hide Answer ▼</span>
-                        </div>
-                        <div class="question-body">
-                            <p class="mb-2 font-medium">$\int_{-1}^{2}x^{3}dx$</p>
-                            <div class="mt-4 p-4 bg-green-50 rounded border border-green-100">
-                                <p><strong>Answer: (C) 15/4</strong></p>
-                                <p class="text-sm mt-1">Antiderivative of $x^3$ is $\frac{x^4}{4}$.</p>
-                                <p class="text-sm">Evaluate: $[\frac{2^4}{4}] - [\frac{(-1)^4}{4}] = \frac{16}{4} - \frac{1}{4} = \frac{15}{4}$.</p>
-                            </div>
-                        </div>
-                    </div>
-
-                </div>
+            <!-- Footer Navigation -->
+            <div class="mt-12 flex justify-between pt-6 border-t border-gray-200">
+                <button onclick="app.prevTopic()" class="px-6 py-3 bg-gray-200 text-gray-700 rounded-lg font-medium hover:bg-gray-300 transition">← Previous</button>
+                <button onclick="app.nextTopic()" class="px-6 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition shadow-lg">Next Topic →</button>
             </div>
-        </section>
-
-        <!-- SUBSTITUTION SECTION -->
-        <section id="substitution" class="content-section max-w-6xl mx-auto">
-             <header class="mb-6 pb-4 border-b border-gray-200">
-                <h2 class="text-3xl font-bold text-amber-900">Substitution Rule</h2>
-                <p class="text-gray-600">Reverse Chain Rule & changing variables.</p>
-            </header>
-
-             <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
-                <!-- Concept Column -->
-                <div class="lg:col-span-4">
-                    <div class="concept-card border-amber-500">
-                        <h3 class="font-bold text-xl text-amber-900 mb-4 flex items-center">
-                            <span class="text-2xl mr-2">🔄</span> U-Sub Steps
-                        </h3>
-                        <div class="space-y-4 text-sm text-gray-700">
-                            <ol class="list-decimal list-inside space-y-2">
-                                <li><strong>Pick $u$:</strong> Usually inside a root, parenthesis, or exponent.</li>
-                                <li><strong>Differentiate:</strong> Find $du$. Solve for $dx$.</li>
-                                <li class="bg-amber-50 p-2 rounded border border-amber-200"><strong>CRITICAL: Change Bounds!</strong><br>For $\int_a^b$, calculate $u(a)$ and $u(b)$.</li>
-                                <li><strong>Substitute:</strong> Replace all x's with u's.</li>
-                                <li><strong>Integrate:</strong> Use power rule.</li>
-                            </ol>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Questions Column -->
-                <div class="lg:col-span-8 space-y-4">
-                    
-                    <!-- Q22 -->
-                    <div class="question-card">
-                        <div class="question-header group">
-                            <span class="font-semibold text-amber-900">Q22 (4 pts): Changing Bounds</span>
-                             <span class="text-gray-400 group-hover:text-amber-600 text-sm">Show/Hide Answer ▼</span>
-                        </div>
-                        <div class="question-body">
-                            <p class="mb-2 font-medium">Integral $\int_{2}^{3}\frac{x}{6+x^{2}}dx$ with sub $u=6+x^{2}$. Equivalent integral?</p>
-                            <div class="mt-4 p-4 bg-green-50 rounded border border-green-100">
-                                <p><strong>Answer: (E) $\int_{10}^{15}\frac{1}{2u}du$</strong></p>
-                                <p class="text-sm mt-2"><strong>1. Find du:</strong> $du = 2x dx \implies \frac{1}{2}du = x dx$.</p>
-                                <p class="text-sm mt-1"><strong>2. Change Bounds:</strong></p>
-                                <ul class="list-disc pl-5 text-sm text-gray-600">
-                                    <li>Lower: $x=2 \to u = 6+(2)^2 = 10$</li>
-                                    <li>Upper: $x=3 \to u = 6+(3)^2 = 15$</li>
-                                </ul>
-                                <p class="text-sm mt-2"><strong>3. Result:</strong> $\int_{10}^{15} \frac{1}{u} (\frac{1}{2}du)$</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Q23 -->
-                    <div class="question-card border-amber-300">
-                        <div class="question-header group bg-amber-50">
-                            <span class="font-bold text-amber-900">Q23 (10 pts): Tricky Indefinite Sub</span>
-                             <span class="text-amber-600 font-semibold text-sm">Show/Hide Solution ▼</span>
-                        </div>
-                        <div class="question-body">
-                            <p class="mb-2 font-medium">Evaluate $\int x\sqrt{1-3x}dx$</p>
-                            <div class="mt-4 space-y-2">
-                                <p><strong>1. Let $u = 1-3x$</strong>. Then $du = -3dx \implies dx = -\frac{1}{3}du$.</p>
-                                <p><strong>2. Solve for x:</strong> We have an extra 'x' outside. <br> $u = 1-3x \implies 3x = 1-u \implies x = \frac{1-u}{3}$.</p>
-                                <p><strong>3. Substitute:</strong> $\int (\frac{1-u}{3}) \sqrt{u} (-\frac{1}{3}du)$</p>
-                                <p><strong>4. Clean up constants:</strong> $-\frac{1}{9} \int (1-u)u^{1/2} du$</p>
-                                <p><strong>5. Distribute & Power Rule:</strong> $-\frac{1}{9} \int (u^{1/2} - u^{3/2}) du$</p>
-                                <p class="text-green-700 font-bold mt-2">Don't forget +C at the end!</p>
-                            </div>
-                        </div>
-                    </div>
-
-                </div>
-            </div>
-        </section>
-
-        <!-- RIEMANN SECTION -->
-        <section id="riemann" class="content-section max-w-6xl mx-auto">
-            <header class="mb-6 pb-4 border-b border-gray-200">
-                <h2 class="text-3xl font-bold text-purple-900">Riemann Sums</h2>
-                <p class="text-gray-600">Approximating area with rectangles.</p>
-            </header>
-
-            <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
-                <!-- Concept Column -->
-                <div class="lg:col-span-4">
-                    <div class="concept-card border-purple-500">
-                        <h3 class="font-bold text-xl text-purple-900 mb-4 flex items-center">
-                            <span class="text-2xl mr-2">📏</span> Formulas
-                        </h3>
-                        <div class="space-y-4 text-sm text-gray-700">
-                            <div>
-                                <strong class="block text-gray-900">Width ($\Delta x$):</strong>
-                                <p>$\frac{b-a}{n}$</p>
-                            </div>
-                             <div>
-                                <strong class="block text-gray-900">Right Endpoint ($x_i$):</strong>
-                                <p>$a + i\Delta x$</p>
-                            </div>
-                             <div>
-                                <strong class="block text-gray-900">Limit Definition:</strong>
-                                <p>$\lim_{n \to \infty} \sum_{i=1}^n f(x_i) \Delta x$</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Questions Column -->
-                <div class="lg:col-span-8 space-y-4">
-                     <div class="question-card">
-                        <div class="question-header group">
-                            <span class="font-semibold text-purple-900">Q9 (4 pts): Limit Definition</span>
-                             <span class="text-gray-400 group-hover:text-purple-600 text-sm">Show/Hide Answer ▼</span>
-                        </div>
-                        <div class="question-body">
-                            <p class="mb-2 font-medium">Which limit represents $\int_{2}^{8}\tan~x~dx$?</p>
-                            <div class="mt-4 p-4 bg-green-50 rounded border border-green-100">
-                                <p><strong>Answer: (D)</strong></p>
-                                <p class="text-sm mt-2">
-                                    1. Width $\Delta x = \frac{8-2}{n} = \frac{6}{n}$.<br>
-                                    2. Endpoint $x_i = 2 + \frac{6i}{n}$.<br>
-                                    3. Plug into sum: $\sum \tan(2 + \frac{6i}{n}) \cdot \frac{6}{n}$
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="question-card">
-                        <div class="question-header group">
-                            <span class="font-semibold text-purple-900">Q10 (4 pts): Calculate R4</span>
-                             <span class="text-gray-400 group-hover:text-purple-600 text-sm">Show/Hide Answer ▼</span>
-                        </div>
-                        <div class="question-body">
-                            <p class="mb-2 font-medium">Find Right Hand Estimate $R_4$ for $[3, 15]$.</p>
-                             <div class="chart-container h-64 mb-4">
-                                <canvas id="chartQ10"></canvas>
-                            </div>
-                            <div class="mt-4 p-4 bg-green-50 rounded border border-green-100">
-                                <p><strong>Answer: (D) 33</strong></p>
-                                <p class="text-sm mt-2">
-                                    1. Width: $(15-3)/4 = 3$.<br>
-                                    2. Evaluate at Right Endpoints: $x=6, 9, 12, 15$.<br>
-                                    3. Heights: $4, 3, 1, 3$.<br>
-                                    4. Area: $3 \times (4+3+1+3) = 3 \times 11 = 33$.
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- ANTIDERIVATIVES SECTION -->
-        <section id="antiderivatives" class="content-section max-w-6xl mx-auto">
-            <header class="mb-6 pb-4 border-b border-gray-200">
-                <h2 class="text-3xl font-bold text-gray-700">Antiderivatives</h2>
-                <p class="text-gray-600">Working backwards from the derivative.</p>
-            </header>
-
-            <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
-                 <!-- Concept Column -->
-                <div class="lg:col-span-4">
-                    <div class="concept-card border-gray-500">
-                        <h3 class="font-bold text-xl text-gray-800 mb-4 flex items-center">
-                            <span class="text-2xl mr-2">↩️</span> Rules
-                        </h3>
-                         <div class="space-y-4 text-sm text-gray-700">
-                            <div>
-                                <strong class="block text-gray-900">Power Rule:</strong>
-                                <p>$\int x^n dx = \frac{x^{n+1}}{n+1} + C$</p>
-                            </div>
-                            <div>
-                                <strong class="block text-gray-900">Trig:</strong>
-                                <p>$\int \sin x = -\cos x$</p>
-                                <p>$\int \cos x = \sin x$</p>
-                            </div>
-                             <div class="bg-gray-100 p-2 rounded text-center font-bold text-red-600">
-                                Don't forget +C!
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Questions Column -->
-                <div class="lg:col-span-8 space-y-4">
-                     <div class="question-card">
-                        <div class="question-header group">
-                            <span class="font-semibold text-gray-700">Q14 (4 pts): Finding C</span>
-                             <span class="text-gray-400 group-hover:text-gray-600 text-sm">Show/Hide Answer ▼</span>
-                        </div>
-                        <div class="question-body">
-                            <p class="mb-2 font-medium">Given $f'(x)=3+2\sin x$ and $f(0)=7$. Find $f(\pi)$.</p>
-                            <div class="mt-4 p-4 bg-green-50 rounded border border-green-100">
-                                <p><strong>Answer: (B) $3\pi + 11$</strong></p>
-                                <ol class="list-decimal pl-5 text-sm mt-2">
-                                    <li>Integrate: $f(x) = 3x - 2\cos x + C$</li>
-                                    <li>Plug in (0,7): $3(0) - 2(1) + C = 7 \to -2 + C = 7 \to C=9$</li>
-                                    <li>Final Function: $f(x) = 3x - 2\cos x + 9$</li>
-                                    <li>Plug in $\pi$: $3\pi - 2\cos(\pi) + 9 = 3\pi - 2(-1) + 9 = 3\pi + 11$</li>
-                                </ol>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
+        </div>
 
     </main>
 
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            // --- Chart Logic ---
-            const chartOptions = {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: { legend: { display: false } },
-                scales: { x: { display: false }, y: { display: false } }
-            };
-
-            // Topic Chart
-            new Chart(document.getElementById('topicChart'), {
-                type: 'doughnut',
-                data: {
-                    labels: ['Optimization', 'FTC', 'Substitution', 'Riemann', 'Antiderivatives'],
-                    datasets: [{
-                        data: [30, 32, 22, 8, 8],
-                        backgroundColor: ['#3b82f6', '#22c55e', '#f59e0b', '#a855f7', '#9ca3af'],
-                        borderWidth: 0
-                    }]
-                },
-                options: { cutout: '70%', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
-            });
-
-             // Q7 Graph
-             const ctxQ7 = document.getElementById('chartQ7').getContext('2d');
-             new Chart(ctxQ7, {
-                type: 'line',
-                data: {
-                    labels: [0, 1, 2, 3, 4, 5, 6],
-                    datasets: [{
-                        data: [-2, 0.5, 1.5, 3, 0, -1.5, 1],
-                        borderColor: '#3b82f6',
-                        borderWidth: 3,
-                        pointBackgroundColor: '#fff',
-                        pointBorderColor: '#3b82f6',
-                        tension: 0.4
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: { legend: { display: false }, annotation: { annotations: { line1: { type: 'line', scaleID: 'y', value: 0, borderColor: 'black', borderWidth: 1 } } } },
-                    scales: { y: { grid: { display: false } }, x: { grid: { display: false } } }
-                }
-            });
-
-            // Q10 Graph
-            new Chart(document.getElementById('chartQ10'), {
-                type: 'line',
-                data: {
-                    labels: [0, 3, 6, 9, 12, 15, 18],
-                    datasets: [{
-                        data: [9, 7, 4, 3, 1, 3, 5],
-                        borderColor: '#a855f7',
-                        borderWidth: 3,
-                        fill: true,
-                        backgroundColor: 'rgba(168, 85, 247, 0.1)',
-                        tension: 0.4
-                    }]
-                },
-                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
-            });
-
-            // Q12 Graph
-             new Chart(document.getElementById('chartQ12'), {
-                type: 'line',
-                data: {
-                    labels: [0, 1, 2, 3, 4, 6, 7, 8, 9],
-                    datasets: [{
-                        data: [0, 1, 2, 0, -2, -2, 0, 1, 2],
-                        borderColor: '#22c55e',
-                        borderWidth: 3,
-                        fill: true,
-                        backgroundColor: (context) => {
-                            const ctx = context.chart.ctx;
-                            const gradient = ctx.createLinearGradient(0, 0, 0, 250);
-                            gradient.addColorStop(0, 'rgba(34, 197, 94, 0.2)');
-                            gradient.addColorStop(1, 'rgba(34, 197, 94, 0.0)');
-                            return gradient;
-                        },
-                        tension: 0
-                    }]
-                },
-                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { grid: { color: (ctx) => ctx.tick.value === 0 ? 'black' : '#eee' } } } }
-            });
-
-            // --- Interaction Logic ---
-            const navButtons = document.querySelectorAll('.nav-btn');
-            const sections = document.querySelectorAll('.content-section');
-
-            navButtons.forEach(btn => {
-                btn.addEventListener('click', () => {
-                    const target = btn.dataset.target;
-                    
-                    // Update Nav
-                    navButtons.forEach(b => b.classList.remove('active'));
-                    btn.classList.add('active');
-
-                    // Update Section
-                    sections.forEach(s => {
-                        s.classList.remove('active');
-                        if(s.id === target) s.classList.add('active');
-                    });
-                });
-            });
-
-            const headers = document.querySelectorAll('.question-header');
-            headers.forEach(h => {
-                h.addEventListener('click', () => {
-                    const body = h.nextElementSibling;
-                    if(body.classList.contains('hidden')) {
-                        body.classList.remove('hidden');
-                        body.classList.add('block');
-                        h.querySelector('span:last-child').textContent = 'Show/Hide Answer ▲';
-                    } else {
-                        body.classList.add('hidden');
-                        body.classList.remove('block');
-                        h.querySelector('span:last-child').textContent = 'Show/Hide Answer ▼';
+        // --- DATA & CONTENT ---
+        const topics = {
+            'optimization': {
+                title: "Optimization",
+                desc: "Finding Max/Min in applied contexts.",
+                color: "blue",
+                concepts: `
+                    <strong class="block text-gray-900 mb-1">The Protocol:</strong>
+                    <ol class="list-decimal list-inside space-y-1 pl-2 mb-4">
+                        <li>Draw a picture.</li>
+                        <li><strong>Constraint:</strong> What is limited?</li>
+                        <li><strong>Objective:</strong> What to max/min?</li>
+                        <li>Solve constraint for one var.</li>
+                        <li>Plug into Objective.</li>
+                        <li>$f'(x) = 0$. Find critical numbers.</li>
+                        <li><strong>Verify:</strong> Check endpoints.</li>
+                    </ol>
+                    <div class="bg-blue-50 p-3 rounded border border-blue-100">
+                        <strong class="text-blue-800">Tests:</strong>
+                        <ul class="mt-1 space-y-1">
+                            <li>$f'(x)$ + to - $\\to$ MAX</li>
+                            <li>$f''(c) < 0$ $\\to$ MAX (Concave Down)</li>
+                        </ul>
+                    </div>
+                `,
+                questions: [
+                    {
+                        id: "q1",
+                        type: "tf",
+                        points: 2,
+                        question: "True/False: If c is a critical number and $f''(c)=0$, then f has neither a max nor min at c.",
+                        options: ["True", "False"],
+                        correct: 1,
+                        explanation: "False. The 2nd Derivative Test is inconclusive if $f''(c)=0$. It could still be a max or min (use 1st Deriv Test). Example: $y=x^4$ at $x=0$ is a min, but $f''(0)=0$."
+                    },
+                    {
+                        id: "q5",
+                        type: "mc",
+                        points: 4,
+                        question: "Suppose $f'(x)=\\frac{(x-3)(x+5)}{x-4}$. At $x=3$, f(x) has:",
+                        options: ["Local Maximum", "Local Minimum", "Neither", "Not enough info"],
+                        correct: 0,
+                        explanation: "Check signs of $f'$ around 3. <br>Left (0): $(-)(+)/(-) = +$. <br>Right (3.5): $(+)(+)/(-) = -$. <br>Changes Positive to Negative $\\implies$ Local Maximum."
+                    },
+                    {
+                        id: "q7",
+                        type: "chart",
+                        points: 4,
+                        question: "The graph of derivative $f'(x)$ is shown. Where is the local max?",
+                        chartId: "chartQ7",
+                        options: ["x=1", "x=2", "x=3", "x=4"],
+                        correct: 3,
+                        explanation: "Local Max happens when $f'(x)$ changes from Positive (above axis) to Negative (below axis). This happens at $x=4$."
+                    },
+                    {
+                        id: "q24",
+                        type: "frq",
+                        points: 10,
+                        title: "Captain Efficiency",
+                        question: "Minimize Energy. Swim cost = 2x run cost. Canal width $\\sqrt{300}$. Run $x$, swim to point 40m downstream.",
+                        solution: "1. Swim Dist = $\\sqrt{300 + (40-x)^2}$ <br> 2. $E(x) = 1\\cdot x + 2\\sqrt{300 + (40-x)^2}$ <br> 3. $E' = 1 + \\frac{2(2(40-x)(-1))}{2\\sqrt{...}} = 0$ <br> 4. $1 = \\frac{2(40-x)}{\\sqrt{...}} \\implies \\sqrt{...} = 2(40-x)$ <br> 5. Square: $300+(40-x)^2 = 4(40-x)^2$ <br> 6. $300 = 3(40-x)^2 \\implies 100=(40-x)^2 \\implies x=30$."
                     }
+                ]
+            },
+            'ftc': {
+                title: "FTC & Integrals",
+                desc: "The Fundamental Theorem of Calculus.",
+                color: "green",
+                concepts: `
+                    <strong class="block text-gray-900 mb-2 border-b border-green-200 pb-1">Part 1: Derivative</strong>
+                    <p class="mb-2">$\\frac{d}{dx} \\int_a^x f(t) dt = f(x)$</p>
+                    <p class="text-green-700"><strong>Chain Rule:</strong> $\\frac{d}{dx} \\int_a^{g(x)} f(t) dt = f(g(x)) \\cdot g'(x)$</p>
+                    
+                    <strong class="block text-gray-900 mt-4 mb-2 border-b border-green-200 pb-1">Part 2: Evaluation</strong>
+                    <p>$\\int_a^b f(x) dx = F(b) - F(a)$</p>
+                `,
+                questions: [
+                    {
+                        id: "q11",
+                        type: "mc",
+                        points: 4,
+                        question: "If $g(x)=\\int_{4}^{x}\\frac{1}{1+t}dt$, find $g'(2)$.",
+                        options: ["4/3", "2/5", "1/3", "1/5"],
+                        correct: 2,
+                        explanation: "FTC Part 1: $g'(x) = \\frac{1}{1+x}$. Evaluate at 2: $\\frac{1}{1+2} = 1/3$."
+                    },
+                    {
+                        id: "q12",
+                        type: "chart",
+                        points: 4,
+                        question: "Evaluate $\\int_{1}^{8}f(x)dx$ using the graph.",
+                        chartId: "chartQ12",
+                        options: ["-5", "-3", "-2", "4"],
+                        correct: 2,
+                        explanation: "Sum of signed areas. Area(1-3) $\\approx 2.5$. Area(3-7) is below axis $\\approx -5$. Area(7-8) $\\approx 0.5$. Sum $\\approx -2$."
+                    },
+                    {
+                        id: "q15",
+                        type: "mc",
+                        points: 4,
+                        question: "Evaluate $\\int_{-1}^{2}x^{3}dx$",
+                        options: ["1/4", "9/4", "15/4", "25/4"],
+                        correct: 2,
+                        explanation: "Antideriv: $x^4/4$. $F(2) - F(-1) = (16/4) - (1/4) = 15/4$."
+                    }
+                ]
+            },
+            'substitution': {
+                title: "Substitution Rule",
+                desc: "Reverse Chain Rule.",
+                color: "amber",
+                concepts: `
+                    <ol class="list-decimal list-inside space-y-2">
+                        <li><strong>Pick u:</strong> Inside part.</li>
+                        <li><strong>Find du:</strong> Solve for dx.</li>
+                        <li class="bg-yellow-100 p-1 rounded"><strong>Change Bounds:</strong> If $x=a, x=b$, find $u(a), u(b)$.</li>
+                        <li><strong>Sub & Solve.</strong></li>
+                    </ol>
+                `,
+                questions: [
+                    {
+                        id: "q22",
+                        type: "mc",
+                        points: 4,
+                        question: "Transform $\\int_{2}^{3}\\frac{x}{6+x^{2}}dx$ using $u=6+x^2$.",
+                        options: ["$\\int_{2}^{3}\\frac{1}{2u}du$", "$\\int_{10}^{15}\\frac{1}{u}du$", "$\\int_{10}^{15}\\frac{1}{2u}du$"],
+                        correct: 2,
+                        explanation: "Bounds: $x=2 \\to u=10$, $x=3 \\to u=15$. $du=2xdx \\to (1/2)du=xdx$. Result: $\\int_{10}^{15} (1/2u) du$."
+                    },
+                    {
+                        id: "q23",
+                        type: "frq",
+                        points: 10,
+                        title: "Tricky Substitution",
+                        question: "Evaluate $\\int x\\sqrt{1-3x}dx$",
+                        solution: "1. $u=1-3x \\implies x=(1-u)/3, dx=-du/3$. <br> 2. $\\int \\frac{1-u}{3} \\sqrt{u} \\frac{-du}{3} = -\\frac{1}{9} \\int (u^{1/2} - u^{3/2}) du$. <br> 3. Integrate power rule. <br> 4. $- \\frac{2}{27}(1-3x)^{3/2} + \\frac{2}{45}(1-3x)^{5/2} + C$."
+                    }
+                ]
+            },
+            'riemann': {
+                title: "Riemann Sums",
+                desc: "Approximating Area.",
+                color: "purple",
+                concepts: `
+                    <ul class="list-disc list-inside space-y-2">
+                        <li>$\\Delta x = \\frac{b-a}{n}$</li>
+                        <li>Right Endpt: $x_i = a + i\\Delta x$</li>
+                        <li>Area $\\approx \\sum f(x_i)\\Delta x$</li>
+                    </ul>
+                `,
+                questions: [
+                    {
+                        id: "q9",
+                        type: "mc",
+                        points: 4,
+                        question: "Which limit is $\\int_{2}^{8}\\tan~x~dx$?",
+                        options: ["$\\lim \\sum \\tan(\\frac{i}{n})\\frac{1}{n}$", "$\\lim \\sum \\tan(2+\\frac{6i}{n})\\frac{6}{n}$"],
+                        correct: 1,
+                        explanation: "Width = $(8-2)/n = 6/n$. Start point = 2. Input = $2 + i(6/n)$."
+                    },
+                    {
+                        id: "q10",
+                        type: "chart",
+                        points: 4,
+                        question: "Find Right Hand Estimate $R_4$ for [3,15] from graph.",
+                        chartId: "chartQ10",
+                        options: ["54", "45", "33", "11"],
+                        correct: 2,
+                        explanation: "$\Delta x = 3$. Points: $f(6)=4, f(9)=3, f(12)=1, f(15)=3$. Sum: $3(4+3+1+3) = 33$."
+                    }
+                ]
+            },
+            'antiderivatives': {
+                title: "Antiderivatives",
+                desc: "Finding F(x).",
+                color: "gray",
+                concepts: `
+                    <p>$\\int x^n dx = \\frac{x^{n+1}}{n+1} + C$</p>
+                    <p>$\\int \\sin x = -\\cos x$</p>
+                    <p class="text-red-600 font-bold mt-2">Don't forget +C!</p>
+                `,
+                questions: [
+                    {
+                        id: "q14",
+                        type: "mc",
+                        points: 4,
+                        question: "If $f'(x)=3+2\\sin x$ and $f(0)=7$, find $f(\\pi)$.",
+                        options: ["$3\\pi+13$", "$3\\pi+11$", "$3\\pi+9$"],
+                        correct: 1,
+                        explanation: "$f(x)=3x-2\\cos x + C$. <br>$f(0)=7 \\implies -2+C=7 \\implies C=9$. <br>$f(\\pi)=3\\pi - 2(-1) + 9 = 3\\pi+11$."
+                    },
+                    {
+                        id: "q19",
+                        type: "mc",
+                        points: 4,
+                        question: "$\\int x^2 \\cos(x^3) dx$",
+                        options: ["$\\frac{1}{3}\\sin(x) + C$", "$\\frac{1}{3}\\sin(x^3) + C$"],
+                        correct: 1,
+                        explanation: "$u=x^3, du=3x^2dx$. $\\frac{1}{3} \\int \\cos u du = \\frac{1}{3}\\sin(x^3)+C$."
+                    }
+                ]
+            }
+        };
+
+        // --- APP STATE & LOGIC ---
+        const app = {
+            currentView: 'overview',
+            mastery: new Set(),
+            topicOrder: ['optimization', 'ftc', 'substitution', 'riemann', 'antiderivatives'],
+
+            init() {
+                this.renderOverviewCharts();
+                this.renderAllTopics();
+                this.updateMasteryUI();
+            },
+
+            navigate(viewId) {
+                document.querySelectorAll('.content-view').forEach(el => el.classList.remove('active'));
+                document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+                
+                if(viewId === 'overview') {
+                    document.getElementById('overview').classList.add('active');
+                    document.getElementById('topic-container').classList.add('hidden');
+                    // Find overview nav item
+                    document.querySelector(`.nav-item[onclick="app.navigate('overview')"]`).classList.add('active');
+                } else {
+                    // It's a topic
+                    this.renderTopic(viewId);
+                    document.getElementById('overview').classList.remove('active');
+                    document.getElementById('topic-container').classList.remove('hidden');
+                    document.getElementById('topic-container').classList.add('active'); // For animation
+                     document.querySelector(`.nav-item[onclick="app.navigate('${viewId}')"]`).classList.add('active');
+                }
+                
+                // Render math again after navigation
+                if(window.MathJax) MathJax.typesetPromise();
+            },
+
+            renderTopic(topicKey) {
+                const data = topics[topicKey];
+                const container = document.getElementById('topic-container');
+                
+                // Update Header
+                document.getElementById('topic-title').textContent = data.title;
+                document.getElementById('topic-title').className = `text-3xl font-bold text-${data.color}-900`;
+                document.getElementById('topic-desc').textContent = data.desc;
+                
+                // Update Concepts
+                const conceptCard = document.getElementById('concept-card-style');
+                conceptCard.className = `bg-white p-6 rounded-xl shadow-md border-l-4 border-${data.color}-500 sticky top-4`;
+                document.getElementById('concept-title').className = `font-bold text-xl mb-4 flex items-center text-${data.color}-900`;
+                document.getElementById('concept-content').innerHTML = data.concepts;
+
+                // Update Progress for Topic
+                const topicTotal = data.questions.length;
+                const topicMastered = data.questions.filter(q => this.mastery.has(q.id)).length;
+                document.getElementById('topic-score').textContent = `${topicMastered}/${topicTotal}`;
+                document.getElementById('topic-score').className = `text-xl font-bold text-${data.color}-600`;
+
+                // Render Questions
+                const qList = document.getElementById('questions-list');
+                qList.innerHTML = '';
+                
+                data.questions.forEach((q, index) => {
+                    const qCard = document.createElement('div');
+                    qCard.className = "bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden";
+                    
+                    let content = `<div class="p-5"><div class="flex justify-between mb-3"><span class="font-bold text-${data.color}-900">Question ${index+1} (${q.points} pts)</span>`;
+                    
+                    if(this.mastery.has(q.id)) content += `<span class="text-green-600 font-bold">✓ Mastered</span>`;
+                    
+                    content += `</div><p class="mb-4 text-gray-800 font-medium">${q.question}</p>`;
+                    
+                    // If chart exists
+                    if(q.type === 'chart') {
+                        content += `<div class="h-64 w-full mb-4"><canvas id="${q.chartId}"></canvas></div>`;
+                    }
+
+                    // Render Options or FRQ
+                    if(q.type === 'mc' || q.type === 'tf' || q.type === 'chart') {
+                        content += `<div class="space-y-2" id="opts-${q.id}">`;
+                        q.options.forEach((opt, i) => {
+                            content += `<button class="btn-option" onclick="app.checkAnswer('${q.id}', ${i}, ${q.correct})">${opt}</button>`;
+                        });
+                        content += `</div>`;
+                    } else if (q.type === 'frq') {
+                        content += `
+                            <button onclick="document.getElementById('sol-${q.id}').classList.remove('hidden')" class="text-blue-600 font-semibold text-sm hover:underline">Show Solution</button>
+                            <div id="sol-${q.id}" class="hidden mt-3 p-4 bg-${data.color}-50 rounded border border-${data.color}-100">
+                                <p class="text-sm text-gray-700 mb-3">${q.solution}</p>
+                                <div class="flex gap-2">
+                                    <button onclick="app.markMastery('${q.id}', true)" class="px-3 py-1 bg-green-600 text-white rounded text-sm">I Got It</button>
+                                    <button onclick="app.markMastery('${q.id}', false)" class="px-3 py-1 bg-gray-400 text-white rounded text-sm">Missed It</button>
+                                </div>
+                            </div>
+                        `;
+                    }
+
+                    // Feedback Container
+                    content += `<div id="feedback-${q.id}" class="hidden mt-4 p-3 rounded text-sm"></div></div>`;
+                    qCard.innerHTML = content;
+                    qList.appendChild(qCard);
+                    
+                    // Initialize charts if needed after DOM insertion
+                    if(q.type === 'chart') setTimeout(() => this.initChart(q.chartId), 0);
                 });
-            });
-        });
+                
+                this.currentView = topicKey;
+                if(window.MathJax) MathJax.typesetPromise();
+            },
+
+            checkAnswer(qId, selectedIdx, correctIdx) {
+                const feedbackEl = document.getElementById(`feedback-${qId}`);
+                const optsContainer = document.getElementById(`opts-${qId}`);
+                const buttons = optsContainer.querySelectorAll('button');
+                
+                // Disable buttons
+                buttons.forEach(btn => btn.disabled = true);
+                
+                if(selectedIdx === correctIdx) {
+                    buttons[selectedIdx].classList.add('correct');
+                    feedbackEl.className = "mt-4 p-3 bg-green-50 border border-green-200 rounded text-green-800 text-sm block";
+                    feedbackEl.innerHTML = `<strong>Correct!</strong> ${this.getExplanation(qId)}`;
+                    this.markMastery(qId, true);
+                } else {
+                    buttons[selectedIdx].classList.add('wrong');
+                    buttons[correctIdx].classList.add('correct'); // Show correct one
+                    feedbackEl.className = "mt-4 p-3 bg-red-50 border border-red-200 rounded text-red-800 text-sm block";
+                    feedbackEl.innerHTML = `<strong>Incorrect.</strong> ${this.getExplanation(qId)}`;
+                }
+            },
+
+            markMastery(qId, isCorrect) {
+                if(isCorrect) {
+                    this.mastery.add(qId);
+                } else {
+                    this.mastery.delete(qId); // Logic for re-testing
+                }
+                this.updateMasteryUI();
+                // Refresh topic score if visible
+                if(this.currentView !== 'overview') this.renderTopic(this.currentView);
+            },
+
+            getExplanation(qId) {
+                for(let t in topics) {
+                    const q = topics[t].questions.find(x => x.id === qId);
+                    if(q) return q.explanation;
+                }
+                return "";
+            },
+
+            updateMasteryUI() {
+                let totalQ = 0;
+                let masteredQ = this.mastery.size;
+                for(let t in topics) totalQ += topics[t].questions.length;
+                
+                const percentage = Math.round((masteredQ / totalQ) * 100);
+                
+                // Sidebar
+                document.getElementById('sidebar-progress').style.width = `${percentage}%`;
+                document.getElementById('sidebar-progress-text').textContent = `${percentage}%`;
+                
+                // Dashboard
+                document.getElementById('total-score-display').textContent = `${masteredQ}/${totalQ}`;
+                
+                // Update Chart
+                const chart = Chart.getChart("masteryChart");
+                if(chart) {
+                    chart.data.datasets[0].data = [masteredQ, totalQ - masteredQ];
+                    chart.update();
+                }
+            },
+
+            nextTopic() {
+                const idx = this.topicOrder.indexOf(this.currentView);
+                if(idx < this.topicOrder.length - 1) this.navigate(this.topicOrder[idx+1]);
+                else this.navigate('overview');
+            },
+            prevTopic() {
+                const idx = this.topicOrder.indexOf(this.currentView);
+                if(idx > 0) this.navigate(this.topicOrder[idx-1]);
+                else this.navigate('overview');
+            },
+
+            renderOverviewCharts() {
+                 new Chart(document.getElementById('masteryChart'), {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Mastered', 'Remaining'],
+                        datasets: [{
+                            data: [0, 14], // Initial data
+                            backgroundColor: ['#2563eb', '#e5e7eb'],
+                            borderWidth: 0
+                        }]
+                    },
+                    options: { cutout: '75%', responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
+                });
+            },
+
+            initChart(chartId) {
+                const ctx = document.getElementById(chartId).getContext('2d');
+                // Avoid recreating if exists
+                if(Chart.getChart(chartId)) return;
+
+                if(chartId === 'chartQ7') {
+                    new Chart(ctx, {
+                        type: 'line',
+                        data: {
+                            labels: [0, 1, 2, 3, 4, 5, 6],
+                            datasets: [{
+                                label: "f'(x)",
+                                data: [-2, 0.5, 1.5, 3, 0, -1.5, 1],
+                                borderColor: '#3b82f6',
+                                borderWidth: 3,
+                                tension: 0.4
+                            }]
+                        },
+                        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, annotation: { annotations: { line1: { type: 'line', scaleID: 'y', value: 0, borderColor: 'black', borderWidth: 1 } } } } }
+                    });
+                } else if (chartId === 'chartQ12') {
+                    new Chart(ctx, {
+                        type: 'line',
+                        data: {
+                            labels: [0, 1, 2, 3, 4, 6, 7, 8, 9],
+                            datasets: [{
+                                data: [0, 1, 2, 0, -2, -2, 0, 1, 2],
+                                borderColor: '#22c55e',
+                                borderWidth: 3,
+                                fill: true,
+                                backgroundColor: 'rgba(34, 197, 94, 0.1)',
+                                tension: 0
+                            }]
+                        },
+                        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { grid: { color: (c) => c.tick.value === 0 ? 'black':'#eee'} } } }
+                    });
+                } else if (chartId === 'chartQ10') {
+                     new Chart(ctx, {
+                        type: 'line',
+                        data: {
+                            labels: [0, 3, 6, 9, 12, 15, 18],
+                            datasets: [{
+                                data: [9, 7, 4, 3, 1, 3, 5],
+                                borderColor: '#a855f7',
+                                borderWidth: 3,
+                                tension: 0.4
+                            }]
+                        },
+                        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+                    });
+                }
+            },
+            renderAllTopics() {
+                // No-op, we render on demand now to handle IDs correctly
+            }
+        };
+
+        document.addEventListener('DOMContentLoaded', () => app.init());
     </script>
 </body>
 </html>
