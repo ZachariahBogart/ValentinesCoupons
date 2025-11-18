@@ -33,6 +33,15 @@
         .btn-option.wrong { @apply bg-red-100 border-red-500 text-red-800 opacity-60; }
         
         .chart-wrapper { position: relative; height: 200px; width: 100%; }
+
+        /* Practice Mode Toggle */
+        .toggle-checkbox:checked {
+            right: 0;
+            border-color: #68D391;
+        }
+        .toggle-checkbox:checked + .toggle-label {
+            background-color: #68D391;
+        }
     </style>
 </head>
 <body class="bg-gray-50 h-screen flex flex-col md:flex-row overflow-hidden">
@@ -131,21 +140,24 @@
         <!-- DYNAMIC TOPIC CONTAINER -->
         <div id="topic-container" class="max-w-6xl mx-auto hidden">
             <!-- Header -->
-            <div class="flex justify-between items-center mb-6 border-b pb-4">
+            <div class="flex justify-between items-center mb-6 border-b pb-4 sticky top-0 bg-gray-50 z-10 pt-2">
                 <div>
                     <h2 class="text-3xl font-bold text-gray-900" id="topic-title">Topic Title</h2>
                     <p class="text-gray-600" id="topic-desc">Description</p>
                 </div>
-                <div class="text-right hidden md:block">
-                    <div class="text-sm font-semibold text-gray-500">Topic Progress</div>
-                    <div class="text-xl font-bold text-blue-600" id="topic-score">0/0</div>
+                <div class="flex items-center gap-4">
+                    <!-- Mode Switcher -->
+                    <div class="bg-white p-1 rounded-lg border shadow-sm flex">
+                        <button onclick="app.setMode('study')" id="btn-mode-study" class="px-4 py-2 rounded-md text-sm font-medium transition-all bg-gray-100 text-gray-900 shadow-sm">📖 Study</button>
+                        <button onclick="app.setMode('practice')" id="btn-mode-practice" class="px-4 py-2 rounded-md text-sm font-medium transition-all text-gray-500 hover:text-gray-900">⚡ Practice</button>
+                    </div>
                 </div>
             </div>
 
             <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
                 <!-- LEFT: Concepts (Sticky) -->
                 <div class="lg:col-span-4">
-                    <div class="bg-white p-6 rounded-xl shadow-md border-l-4 sticky top-4" id="concept-card-style">
+                    <div class="bg-white p-6 rounded-xl shadow-md border-l-4 sticky top-24" id="concept-card-style">
                         <h3 class="font-bold text-xl mb-4 flex items-center" id="concept-title">
                             💡 Key Concepts
                         </h3>
@@ -155,22 +167,197 @@
                     </div>
                 </div>
 
-                <!-- RIGHT: Interactive Questions -->
-                <div class="lg:col-span-8 space-y-6" id="questions-list">
-                    <!-- Questions injected here -->
-                </div>
-            </div>
+                <!-- RIGHT: Questions Container -->
+                <div class="lg:col-span-8">
+                    
+                    <!-- STUDY MODE LIST -->
+                    <div id="study-mode-content" class="space-y-6">
+                        <!-- Static Questions Injected Here -->
+                    </div>
 
-            <!-- Footer Navigation -->
-            <div class="mt-12 flex justify-between pt-6 border-t border-gray-200">
-                <button onclick="app.prevTopic()" class="px-6 py-3 bg-gray-200 text-gray-700 rounded-lg font-medium hover:bg-gray-300 transition">← Previous</button>
-                <button onclick="app.nextTopic()" class="px-6 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition shadow-lg">Next Topic →</button>
+                    <!-- PRACTICE MODE GENERATOR -->
+                    <div id="practice-mode-content" class="hidden space-y-6">
+                        <div class="bg-white border-2 border-dashed border-gray-300 rounded-xl p-8 text-center" id="practice-placeholder">
+                            <div class="text-4xl mb-4">⚡</div>
+                            <h3 class="text-xl font-bold text-gray-900 mb-2">Infinite Practice Mode</h3>
+                            <p class="text-gray-600 mb-6">Generate unlimited variations of questions for this topic.</p>
+                            <button onclick="app.generatePracticeQuestion()" class="px-6 py-3 bg-blue-600 text-white rounded-lg font-bold hover:bg-blue-700 transition shadow-lg">
+                                Generate New Question
+                            </button>
+                        </div>
+                        <div id="generated-question-container" class="hidden">
+                            <!-- Generated Q goes here -->
+                        </div>
+                    </div>
+
+                </div>
             </div>
         </div>
 
     </main>
 
     <script>
+        // --- UTILS ---
+        const randInt = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
+        const randChoice = (arr) => arr[Math.floor(Math.random() * arr.length)];
+
+        // --- GENERATORS ---
+        const generators = {
+            'optimization': () => {
+                // Generate Captain Efficiency Variant
+                const canalWidthSquared = randChoice([100, 200, 300, 400]); // e.g., sqrt(100)=10
+                const canalWidth = Math.sqrt(canalWidthSquared);
+                const downstreamDist = randInt(30, 60);
+                const swimCostMult = randChoice([1.5, 2, 3]); // "Swimming costs 2x..."
+                
+                // Math: x_optimal = downstreamDist - width / sqrt(k^2 - 1)
+                // Let's solve it generally: E(x) = k*sqrt(w^2 + (D-x)^2) + x
+                // E'(x) = k * (-(D-x)) / sqrt(...) + 1 = 0 => sqrt(...) = k(D-x)
+                // w^2 + (D-x)^2 = k^2(D-x)^2 => w^2 = (k^2-1)(D-x)^2
+                // D-x = w / sqrt(k^2-1) => x = D - w / sqrt(k^2-1)
+                
+                // Let's force integer solutions by picking nice numbers
+                // If swimCostMult = 2, k^2-1 = 3. We need w to be multiple of sqrt(3).
+                // Let's construct backwards. 
+                // Let k = 2. Let D-x = 10. Then w = 10*sqrt(3). width^2 = 300.
+                
+                let k, wSq, D, xSol;
+                const scenario = randInt(1, 2);
+                
+                if (scenario === 1) {
+                    // Q24 Style
+                    k = 2;
+                    const leg = randChoice([10, 20, 30]);
+                    wSq = 3 * leg * leg; // w = leg * sqrt(3)
+                    D = leg + randChoice([10, 20]); // Ensure x is positive
+                    xSol = D - leg;
+                } else {
+                    // Simple integers
+                    k = 1.25; // 5/4
+                    // sqrt(k^2-1) = sqrt(25/16 - 1) = sqrt(9/16) = 3/4
+                    const leg = randChoice([12, 24]); 
+                    const w = leg * 0.75; // 3/4 * leg
+                    wSq = w*w;
+                    D = leg + randChoice([10, 20]);
+                    xSol = D - leg;
+                }
+
+                return {
+                    type: 'frq',
+                    title: "Captain Efficiency (Variant)",
+                    question: `Swimming energy cost is $${k}$ times running cost. Canal width is $\\sqrt{${wSq}}$ m. Run $x$ m then swim to point ${D} m downstream. Minimize energy. Find $x$.`,
+                    solution: `1. $k=${k}$, Width $w=\\sqrt{${wSq}}$. <br> 2. Optimal condition: $\\frac{w}{\\sqrt{k^2-1}} = \\text{Swim Leg (horizontal)}$. <br> 3. Horizontal Swim Leg = $D-x$. <br> 4. Solve $D-x = \\frac{\\sqrt{${wSq}}}{\\sqrt{${k*k}-1}}$. <br> 5. $x = ${D} - \\text{result}$. <br> 6. **Answer: ${xSol} m**.`
+                };
+            },
+            'ftc': () => {
+                // Generate FTC Part 1 Problem: d/dx integral from constant to g(x)
+                const lower = randInt(-5, 5);
+                const exponent = randInt(2, 3);
+                const upperFn = (exponent === 2) ? "x^2" : "x^3";
+                const innerFnTex = `\\cos(t)`;
+                const innerFnEval = (exponent === 2) ? `\\cos(x^2)` : `\\cos(x^3)`;
+                const deriv = (exponent === 2) ? `2x` : `3x^2`;
+                
+                const correctAnswerIndex = randInt(0, 3);
+                const options = [];
+                const correctStr = `$${deriv}${innerFnEval}$`;
+                
+                options.push(correctStr);
+                options.push(`$${innerFnEval}$`); // Forgot chain rule
+                options.push(`$${innerFnEval} + C$`); // Confused with indefinite
+                options.push(`$\\sin(${upperFn})$`); // Integrated instead
+                
+                // Shuffle
+                const finalOptions = Array(4).fill(null);
+                finalOptions[correctAnswerIndex] = correctStr;
+                let optIdx = 0;
+                for(let i=0; i<4; i++) {
+                    if(i===correctAnswerIndex) continue;
+                    if(options[optIdx] === correctStr) optIdx++;
+                    finalOptions[i] = options[optIdx++];
+                }
+
+                return {
+                    type: 'mc',
+                    title: "FTC Part 1 Chain Rule",
+                    question: `Find $\\frac{d}{dx} \\int_{${lower}}^{${upperFn}} ${innerFnTex} dt$.`,
+                    options: finalOptions,
+                    correct: correctAnswerIndex,
+                    explanation: `Use Chain Rule: $f(g(x)) \\cdot g'(x)$. <br> $f(t) = \\cos(t)$, $g(x) = ${upperFn}$. <br> Answer = $\\cos(${upperFn}) \\cdot (${deriv})$.`
+                };
+            },
+            'riemann': () => {
+                const n = 4;
+                const width = randInt(2, 5);
+                const start = randInt(0, 5);
+                const end = start + n * width;
+                const yValues = [randInt(1,8), randInt(1,8), randInt(1,8), randInt(1,8)];
+                
+                const sum = yValues.reduce((a,b) => a+b, 0) * width;
+                
+                // Generate fake chart data
+                const chartId = 'chartGen' + Math.random().toString(36).substr(2, 9);
+                
+                return {
+                    type: 'chart-gen',
+                    title: "Right Hand Sum",
+                    question: `Calculate $R_4$ for the interval $[${start}, ${end}]$ based on the graph.`,
+                    chartId: chartId,
+                    chartData: {
+                        labels: [start, start+width, start+2*width, start+3*width, end],
+                        data: [randInt(1,9), ...yValues] // yValues are the RIGHT endpoints
+                    },
+                    options: [`${sum}`, `${sum + randInt(1,10)}`, `${sum - randInt(1,10)}`, `${sum * 2}`],
+                    correct: 0,
+                    explanation: `$\Delta x = ${width}$. Heights at right endpoints: ${yValues.join(', ')}. <br> Sum = $${width}(${yValues.join('+')}) = ${sum}$.`
+                };
+            },
+             'substitution': () => {
+                // Integral of x(x^2 + a)^n
+                const a = randInt(1, 9);
+                const n = randInt(3, 6);
+                const lower = 0;
+                const upper = 1; // Keep x bounds simple
+                
+                // u = x^2 + a. du = 2x dx.
+                const uLower = lower**2 + a;
+                const uUpper = upper**2 + a;
+                
+                const options = [
+                    `$\\int_{${uLower}}^{${uUpper}} \\frac{1}{2} u^{${n}} du$`, // Correct
+                    `$\\int_{${lower}}^{${upper}} \\frac{1}{2} u^{${n}} du$`, // Forgot bounds
+                    `$\\int_{${uLower}}^{${uUpper}} u^{${n}} du$`, // Forgot 1/2
+                    `$\\int_{${uLower}}^{${uUpper}} 2 u^{${n}} du$` // Wrong constant
+                ];
+                
+                return {
+                    type: 'mc',
+                    title: "U-Sub with Bounds",
+                    question: `Rewrite $\\int_{${lower}}^{${upper}} x(x^2 + ${a})^{${n}} dx$ using $u = x^2 + ${a}$.`,
+                    options: [options[0], options[1], options[2], options[3]], // Shuffle in real app
+                    correct: 0, // Simplified for demo
+                    explanation: `$u = x^2+${a} \\implies du = 2x dx \\implies \\frac{1}{2}du = x dx$. <br> Lower: $x=${lower} \\to u=${uLower}$. Upper: $x=${upper} \\to u=${uUpper}$.`
+                };
+            },
+            'antiderivatives': () => {
+                const C = randInt(1, 10);
+                const k = randInt(2, 5);
+                // f'(x) = k. f(0) = C. f(x) = kx + C.
+                // Ask for f(2).
+                const targetX = 2;
+                const ans = k*targetX + C;
+                
+                return {
+                    type: 'mc',
+                    title: "Initial Value Problem",
+                    question: `If $f'(x) = ${k}$ and $f(0) = ${C}$, find $f(${targetX})$.`,
+                    options: [`${ans}`, `${ans+1}`, `${ans-1}`, `${k*targetX}`],
+                    correct: 0,
+                    explanation: `$f(x) = \\int ${k} dx = ${k}x + C$. <br> $f(0)=${C} \\implies C=${C}$. <br> $f(${targetX}) = ${k}(${targetX}) + ${C} = ${ans}$.`
+                };
+            }
+        };
+
         // --- DATA & CONTENT ---
         const topics = {
             'optimization': {
@@ -186,52 +373,26 @@
                         <li>Solve constraint for one var.</li>
                         <li>Plug into Objective.</li>
                         <li>$f'(x) = 0$. Find critical numbers.</li>
-                        <li><strong>Verify:</strong> Check endpoints.</li>
                     </ol>
-                    <div class="bg-blue-50 p-3 rounded border border-blue-100">
-                        <strong class="text-blue-800">Tests:</strong>
-                        <ul class="mt-1 space-y-1">
-                            <li>$f'(x)$ + to - $\\to$ MAX</li>
-                            <li>$f''(c) < 0$ $\\to$ MAX (Concave Down)</li>
-                        </ul>
-                    </div>
                 `,
                 questions: [
                     {
-                        id: "q1",
-                        type: "tf",
-                        points: 2,
+                        id: "q1", type: "tf", points: 2,
                         question: "True/False: If c is a critical number and $f''(c)=0$, then f has neither a max nor min at c.",
-                        options: ["True", "False"],
-                        correct: 1,
-                        explanation: "False. The 2nd Derivative Test is inconclusive if $f''(c)=0$. It could still be a max or min (use 1st Deriv Test). Example: $y=x^4$ at $x=0$ is a min, but $f''(0)=0$."
+                        options: ["True", "False"], correct: 1,
+                        explanation: "False. The 2nd Derivative Test is inconclusive. Use 1st Deriv Test."
                     },
                     {
-                        id: "q5",
-                        type: "mc",
-                        points: 4,
-                        question: "Suppose $f'(x)=\\frac{(x-3)(x+5)}{x-4}$. At $x=3$, f(x) has:",
-                        options: ["Local Maximum", "Local Minimum", "Neither", "Not enough info"],
-                        correct: 0,
-                        explanation: "Check signs of $f'$ around 3. <br>Left (0): $(-)(+)/(-) = +$. <br>Right (3.5): $(+)(+)/(-) = -$. <br>Changes Positive to Negative $\\implies$ Local Maximum."
-                    },
-                    {
-                        id: "q7",
-                        type: "chart",
-                        points: 4,
+                        id: "q7", type: "chart", points: 4,
                         question: "The graph of derivative $f'(x)$ is shown. Where is the local max?",
                         chartId: "chartQ7",
-                        options: ["x=1", "x=2", "x=3", "x=4"],
-                        correct: 3,
-                        explanation: "Local Max happens when $f'(x)$ changes from Positive (above axis) to Negative (below axis). This happens at $x=4$."
+                        options: ["x=1", "x=2", "x=3", "x=4"], correct: 3,
+                        explanation: "Local Max happens when $f'(x)$ changes from Positive to Negative (x=4)."
                     },
                     {
-                        id: "q24",
-                        type: "frq",
-                        points: 10,
-                        title: "Captain Efficiency",
+                        id: "q24", type: "frq", points: 10, title: "Captain Efficiency",
                         question: "Minimize Energy. Swim cost = 2x run cost. Canal width $\\sqrt{300}$. Run $x$, swim to point 40m downstream.",
-                        solution: "1. Swim Dist = $\\sqrt{300 + (40-x)^2}$ <br> 2. $E(x) = 1\\cdot x + 2\\sqrt{300 + (40-x)^2}$ <br> 3. $E' = 1 + \\frac{2(2(40-x)(-1))}{2\\sqrt{...}} = 0$ <br> 4. $1 = \\frac{2(40-x)}{\\sqrt{...}} \\implies \\sqrt{...} = 2(40-x)$ <br> 5. Square: $300+(40-x)^2 = 4(40-x)^2$ <br> 6. $300 = 3(40-x)^2 \\implies 100=(40-x)^2 \\implies x=30$."
+                        solution: "$x=30$ m."
                     }
                 ]
             },
@@ -239,42 +400,20 @@
                 title: "FTC & Integrals",
                 desc: "The Fundamental Theorem of Calculus.",
                 color: "green",
-                concepts: `
-                    <strong class="block text-gray-900 mb-2 border-b border-green-200 pb-1">Part 1: Derivative</strong>
-                    <p class="mb-2">$\\frac{d}{dx} \\int_a^x f(t) dt = f(x)$</p>
-                    <p class="text-green-700"><strong>Chain Rule:</strong> $\\frac{d}{dx} \\int_a^{g(x)} f(t) dt = f(g(x)) \\cdot g'(x)$</p>
-                    
-                    <strong class="block text-gray-900 mt-4 mb-2 border-b border-green-200 pb-1">Part 2: Evaluation</strong>
-                    <p>$\\int_a^b f(x) dx = F(b) - F(a)$</p>
-                `,
+                concepts: "Part 1: Derivative of Integral. Part 2: Evaluation.",
                 questions: [
                     {
-                        id: "q11",
-                        type: "mc",
-                        points: 4,
+                        id: "q11", type: "mc", points: 4,
                         question: "If $g(x)=\\int_{4}^{x}\\frac{1}{1+t}dt$, find $g'(2)$.",
-                        options: ["4/3", "2/5", "1/3", "1/5"],
-                        correct: 2,
-                        explanation: "FTC Part 1: $g'(x) = \\frac{1}{1+x}$. Evaluate at 2: $\\frac{1}{1+2} = 1/3$."
+                        options: ["4/3", "2/5", "1/3", "1/5"], correct: 2,
+                        explanation: "FTC Part 1: $g'(x) = 1/(1+x)$. Evaluate at 2."
                     },
                     {
-                        id: "q12",
-                        type: "chart",
-                        points: 4,
+                        id: "q12", type: "chart", points: 4,
                         question: "Evaluate $\\int_{1}^{8}f(x)dx$ using the graph.",
                         chartId: "chartQ12",
-                        options: ["-5", "-3", "-2", "4"],
-                        correct: 2,
-                        explanation: "Sum of signed areas. Area(1-3) $\\approx 2.5$. Area(3-7) is below axis $\\approx -5$. Area(7-8) $\\approx 0.5$. Sum $\\approx -2$."
-                    },
-                    {
-                        id: "q15",
-                        type: "mc",
-                        points: 4,
-                        question: "Evaluate $\\int_{-1}^{2}x^{3}dx$",
-                        options: ["1/4", "9/4", "15/4", "25/4"],
-                        correct: 2,
-                        explanation: "Antideriv: $x^4/4$. $F(2) - F(-1) = (16/4) - (1/4) = 15/4$."
+                        options: ["-5", "-3", "-2", "4"], correct: 2,
+                        explanation: "Area Above - Area Below = -2."
                     }
                 ]
             },
@@ -282,31 +421,13 @@
                 title: "Substitution Rule",
                 desc: "Reverse Chain Rule.",
                 color: "amber",
-                concepts: `
-                    <ol class="list-decimal list-inside space-y-2">
-                        <li><strong>Pick u:</strong> Inside part.</li>
-                        <li><strong>Find du:</strong> Solve for dx.</li>
-                        <li class="bg-yellow-100 p-1 rounded"><strong>Change Bounds:</strong> If $x=a, x=b$, find $u(a), u(b)$.</li>
-                        <li><strong>Sub & Solve.</strong></li>
-                    </ol>
-                `,
+                concepts: "Pick u, Find du, Change Bounds.",
                 questions: [
                     {
-                        id: "q22",
-                        type: "mc",
-                        points: 4,
+                        id: "q22", type: "mc", points: 4,
                         question: "Transform $\\int_{2}^{3}\\frac{x}{6+x^{2}}dx$ using $u=6+x^2$.",
-                        options: ["$\\int_{2}^{3}\\frac{1}{2u}du$", "$\\int_{10}^{15}\\frac{1}{u}du$", "$\\int_{10}^{15}\\frac{1}{2u}du$"],
-                        correct: 2,
-                        explanation: "Bounds: $x=2 \\to u=10$, $x=3 \\to u=15$. $du=2xdx \\to (1/2)du=xdx$. Result: $\\int_{10}^{15} (1/2u) du$."
-                    },
-                    {
-                        id: "q23",
-                        type: "frq",
-                        points: 10,
-                        title: "Tricky Substitution",
-                        question: "Evaluate $\\int x\\sqrt{1-3x}dx$",
-                        solution: "1. $u=1-3x \\implies x=(1-u)/3, dx=-du/3$. <br> 2. $\\int \\frac{1-u}{3} \\sqrt{u} \\frac{-du}{3} = -\\frac{1}{9} \\int (u^{1/2} - u^{3/2}) du$. <br> 3. Integrate power rule. <br> 4. $- \\frac{2}{27}(1-3x)^{3/2} + \\frac{2}{45}(1-3x)^{5/2} + C$."
+                        options: ["$\\int_{2}^{3}\\frac{1}{2u}du$", "$\\int_{10}^{15}\\frac{1}{u}du$", "$\\int_{10}^{15}\\frac{1}{2u}du$"], correct: 2,
+                        explanation: "Bounds become 10 to 15. dx becomes du/2x."
                     }
                 ]
             },
@@ -314,32 +435,14 @@
                 title: "Riemann Sums",
                 desc: "Approximating Area.",
                 color: "purple",
-                concepts: `
-                    <ul class="list-disc list-inside space-y-2">
-                        <li>$\\Delta x = \\frac{b-a}{n}$</li>
-                        <li>Right Endpt: $x_i = a + i\\Delta x$</li>
-                        <li>Area $\\approx \\sum f(x_i)\\Delta x$</li>
-                    </ul>
-                `,
+                concepts: "Width * Height Sum.",
                 questions: [
-                    {
-                        id: "q9",
-                        type: "mc",
-                        points: 4,
-                        question: "Which limit is $\\int_{2}^{8}\\tan~x~dx$?",
-                        options: ["$\\lim \\sum \\tan(\\frac{i}{n})\\frac{1}{n}$", "$\\lim \\sum \\tan(2+\\frac{6i}{n})\\frac{6}{n}$"],
-                        correct: 1,
-                        explanation: "Width = $(8-2)/n = 6/n$. Start point = 2. Input = $2 + i(6/n)$."
-                    },
-                    {
-                        id: "q10",
-                        type: "chart",
-                        points: 4,
+                     {
+                        id: "q10", type: "chart", points: 4,
                         question: "Find Right Hand Estimate $R_4$ for [3,15] from graph.",
                         chartId: "chartQ10",
-                        options: ["54", "45", "33", "11"],
-                        correct: 2,
-                        explanation: "$\Delta x = 3$. Points: $f(6)=4, f(9)=3, f(12)=1, f(15)=3$. Sum: $3(4+3+1+3) = 33$."
+                        options: ["54", "45", "33", "11"], correct: 2,
+                        explanation: "Sum of heights * width = 33."
                     }
                 ]
             },
@@ -347,44 +450,28 @@
                 title: "Antiderivatives",
                 desc: "Finding F(x).",
                 color: "gray",
-                concepts: `
-                    <p>$\\int x^n dx = \\frac{x^{n+1}}{n+1} + C$</p>
-                    <p>$\\int \\sin x = -\\cos x$</p>
-                    <p class="text-red-600 font-bold mt-2">Don't forget +C!</p>
-                `,
+                concepts: "Power rule in reverse. +C.",
                 questions: [
                     {
-                        id: "q14",
-                        type: "mc",
-                        points: 4,
+                        id: "q14", type: "mc", points: 4,
                         question: "If $f'(x)=3+2\\sin x$ and $f(0)=7$, find $f(\\pi)$.",
-                        options: ["$3\\pi+13$", "$3\\pi+11$", "$3\\pi+9$"],
-                        correct: 1,
-                        explanation: "$f(x)=3x-2\\cos x + C$. <br>$f(0)=7 \\implies -2+C=7 \\implies C=9$. <br>$f(\\pi)=3\\pi - 2(-1) + 9 = 3\\pi+11$."
-                    },
-                    {
-                        id: "q19",
-                        type: "mc",
-                        points: 4,
-                        question: "$\\int x^2 \\cos(x^3) dx$",
-                        options: ["$\\frac{1}{3}\\sin(x) + C$", "$\\frac{1}{3}\\sin(x^3) + C$"],
-                        correct: 1,
-                        explanation: "$u=x^3, du=3x^2dx$. $\\frac{1}{3} \\int \\cos u du = \\frac{1}{3}\\sin(x^3)+C$."
+                        options: ["$3\\pi+13$", "$3\\pi+11$", "$3\\pi+9$"], correct: 1,
+                        explanation: "Integrate and solve for C=9."
                     }
                 ]
             }
         };
 
-        // --- APP STATE & LOGIC ---
+        // --- APP LOGIC ---
         const app = {
             currentView: 'overview',
+            currentMode: 'study', // 'study' or 'practice'
+            currentTopic: null,
             mastery: new Set(),
-            topicOrder: ['optimization', 'ftc', 'substitution', 'riemann', 'antiderivatives'],
-
+            
             init() {
                 this.renderOverviewCharts();
-                this.renderAllTopics();
-                this.updateMasteryUI();
+                // Initialize MathJax if present
             },
 
             navigate(viewId) {
@@ -394,124 +481,255 @@
                 if(viewId === 'overview') {
                     document.getElementById('overview').classList.add('active');
                     document.getElementById('topic-container').classList.add('hidden');
-                    // Find overview nav item
                     document.querySelector(`.nav-item[onclick="app.navigate('overview')"]`).classList.add('active');
                 } else {
-                    // It's a topic
                     this.renderTopic(viewId);
                     document.getElementById('overview').classList.remove('active');
                     document.getElementById('topic-container').classList.remove('hidden');
-                    document.getElementById('topic-container').classList.add('active'); // For animation
-                     document.querySelector(`.nav-item[onclick="app.navigate('${viewId}')"]`).classList.add('active');
+                    document.getElementById('topic-container').classList.add('active');
+                    document.querySelector(`.nav-item[onclick="app.navigate('${viewId}')"]`).classList.add('active');
                 }
-                
-                // Render math again after navigation
                 if(window.MathJax) MathJax.typesetPromise();
             },
 
+            setMode(mode) {
+                this.currentMode = mode;
+                const studyBtn = document.getElementById('btn-mode-study');
+                const practiceBtn = document.getElementById('btn-mode-practice');
+                const studyContent = document.getElementById('study-mode-content');
+                const practiceContent = document.getElementById('practice-mode-content');
+
+                if(mode === 'study') {
+                    studyBtn.classList.replace('text-gray-500', 'text-gray-900');
+                    studyBtn.classList.replace('bg-white', 'bg-gray-100');
+                    studyBtn.classList.add('shadow-sm');
+                    practiceBtn.classList.remove('shadow-sm', 'bg-gray-100', 'text-gray-900');
+                    practiceBtn.classList.add('text-gray-500');
+                    
+                    studyContent.classList.remove('hidden');
+                    practiceContent.classList.add('hidden');
+                } else {
+                    practiceBtn.classList.replace('text-gray-500', 'text-gray-900');
+                    practiceBtn.classList.add('bg-gray-100', 'shadow-sm');
+                    studyBtn.classList.remove('shadow-sm', 'bg-gray-100', 'text-gray-900');
+                    studyBtn.classList.add('text-gray-500');
+                    
+                    studyContent.classList.add('hidden');
+                    practiceContent.classList.remove('hidden');
+                }
+            },
+
             renderTopic(topicKey) {
+                this.currentTopic = topicKey;
                 const data = topics[topicKey];
-                const container = document.getElementById('topic-container');
                 
-                // Update Header
+                // Reset UI
+                this.setMode('study'); 
+                document.getElementById('generated-question-container').innerHTML = '';
+                document.getElementById('generated-question-container').classList.add('hidden');
+                document.getElementById('practice-placeholder').classList.remove('hidden');
+
+                // Update Content
                 document.getElementById('topic-title').textContent = data.title;
                 document.getElementById('topic-title').className = `text-3xl font-bold text-${data.color}-900`;
                 document.getElementById('topic-desc').textContent = data.desc;
                 
                 // Update Concepts
                 const conceptCard = document.getElementById('concept-card-style');
-                conceptCard.className = `bg-white p-6 rounded-xl shadow-md border-l-4 border-${data.color}-500 sticky top-4`;
+                conceptCard.className = `bg-white p-6 rounded-xl shadow-md border-l-4 border-${data.color}-500 sticky top-24 transition-all`;
                 document.getElementById('concept-title').className = `font-bold text-xl mb-4 flex items-center text-${data.color}-900`;
                 document.getElementById('concept-content').innerHTML = data.concepts;
 
-                // Update Progress for Topic
-                const topicTotal = data.questions.length;
-                const topicMastered = data.questions.filter(q => this.mastery.has(q.id)).length;
-                document.getElementById('topic-score').textContent = `${topicMastered}/${topicTotal}`;
-                document.getElementById('topic-score').className = `text-xl font-bold text-${data.color}-600`;
-
-                // Render Questions
-                const qList = document.getElementById('questions-list');
+                // Render Static Questions
+                const qList = document.getElementById('study-mode-content');
                 qList.innerHTML = '';
                 
                 data.questions.forEach((q, index) => {
-                    const qCard = document.createElement('div');
-                    qCard.className = "bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden";
-                    
-                    let content = `<div class="p-5"><div class="flex justify-between mb-3"><span class="font-bold text-${data.color}-900">Question ${index+1} (${q.points} pts)</span>`;
-                    
-                    if(this.mastery.has(q.id)) content += `<span class="text-green-600 font-bold">✓ Mastered</span>`;
-                    
-                    content += `</div><p class="mb-4 text-gray-800 font-medium">${q.question}</p>`;
-                    
-                    // If chart exists
-                    if(q.type === 'chart') {
-                        content += `<div class="h-64 w-full mb-4"><canvas id="${q.chartId}"></canvas></div>`;
-                    }
-
-                    // Render Options or FRQ
-                    if(q.type === 'mc' || q.type === 'tf' || q.type === 'chart') {
-                        content += `<div class="space-y-2" id="opts-${q.id}">`;
-                        q.options.forEach((opt, i) => {
-                            content += `<button class="btn-option" onclick="app.checkAnswer('${q.id}', ${i}, ${q.correct})">${opt}</button>`;
-                        });
-                        content += `</div>`;
-                    } else if (q.type === 'frq') {
-                        content += `
-                            <button onclick="document.getElementById('sol-${q.id}').classList.remove('hidden')" class="text-blue-600 font-semibold text-sm hover:underline">Show Solution</button>
-                            <div id="sol-${q.id}" class="hidden mt-3 p-4 bg-${data.color}-50 rounded border border-${data.color}-100">
-                                <p class="text-sm text-gray-700 mb-3">${q.solution}</p>
-                                <div class="flex gap-2">
-                                    <button onclick="app.markMastery('${q.id}', true)" class="px-3 py-1 bg-green-600 text-white rounded text-sm">I Got It</button>
-                                    <button onclick="app.markMastery('${q.id}', false)" class="px-3 py-1 bg-gray-400 text-white rounded text-sm">Missed It</button>
-                                </div>
-                            </div>
-                        `;
-                    }
-
-                    // Feedback Container
-                    content += `<div id="feedback-${q.id}" class="hidden mt-4 p-3 rounded text-sm"></div></div>`;
-                    qCard.innerHTML = content;
+                    const qCard = this.createQuestionCard(q, index, data.color);
                     qList.appendChild(qCard);
-                    
-                    // Initialize charts if needed after DOM insertion
-                    if(q.type === 'chart') setTimeout(() => this.initChart(q.chartId), 0);
+                    if(q.type === 'chart') setTimeout(() => this.initStaticChart(q.chartId), 0);
                 });
+            },
+
+            createQuestionCard(q, index, color) {
+                const qCard = document.createElement('div');
+                qCard.className = "bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden transition-all hover:shadow-md";
                 
-                this.currentView = topicKey;
+                let content = `<div class="p-5"><div class="flex justify-between mb-3"><span class="font-bold text-${color}-900">Question ${index+1} (${q.points} pts)</span>`;
+                if(this.mastery.has(q.id)) content += `<span class="text-green-600 font-bold text-sm">✓ Mastered</span>`;
+                content += `</div><p class="mb-4 text-gray-800 font-medium">${q.question}</p>`;
+
+                if(q.type === 'chart') content += `<div class="h-64 w-full mb-4"><canvas id="${q.chartId}"></canvas></div>`;
+
+                // Options
+                if(q.type === 'mc' || q.type === 'tf' || q.type === 'chart') {
+                    content += `<div class="space-y-2" id="opts-${q.id}">`;
+                    q.options.forEach((opt, i) => {
+                        content += `<button class="btn-option" onclick="app.checkAnswer('${q.id}', ${i}, ${q.correct})">${opt}</button>`;
+                    });
+                    content += `</div>`;
+                } else if (q.type === 'frq') {
+                    content += `
+                        <button onclick="document.getElementById('sol-${q.id}').classList.remove('hidden')" class="text-blue-600 font-semibold text-sm hover:underline">Show Solution</button>
+                        <div id="sol-${q.id}" class="hidden mt-3 p-4 bg-${color}-50 rounded border border-${color}-100">
+                            <p class="text-sm text-gray-700 mb-3">${q.solution}</p>
+                            <div class="flex gap-2">
+                                <button onclick="app.markMastery('${q.id}', true)" class="px-3 py-1 bg-green-600 text-white rounded text-sm hover:bg-green-700">I Got It</button>
+                                <button onclick="app.markMastery('${q.id}', false)" class="px-3 py-1 bg-gray-400 text-white rounded text-sm hover:bg-gray-500">Missed It</button>
+                            </div>
+                        </div>
+                    `;
+                }
+
+                content += `<div id="feedback-${q.id}" class="hidden mt-4 p-3 rounded text-sm"></div></div>`;
+                qCard.innerHTML = content;
+                return qCard;
+            },
+
+            generatePracticeQuestion() {
+                const generator = generators[this.currentTopic];
+                if(!generator) {
+                    alert("Generator coming soon for this topic!");
+                    return;
+                }
+
+                const q = generator();
+                const qId = 'gen_' + Date.now(); // Unique ID
+                q.id = qId; // Assign ID
+                
+                const container = document.getElementById('generated-question-container');
+                container.innerHTML = ''; // Clear previous
+                container.classList.remove('hidden');
+                document.getElementById('practice-placeholder').classList.add('hidden');
+
+                // Build Card
+                const card = document.createElement('div');
+                card.className = "bg-blue-50 border-2 border-blue-200 rounded-xl shadow-md overflow-hidden animate-fade-in";
+                
+                let content = `<div class="p-6">
+                    <div class="flex justify-between mb-3">
+                        <span class="font-bold text-blue-900 uppercase tracking-wider text-sm">⚡ Practice: ${q.title}</span>
+                        <button onclick="app.generatePracticeQuestion()" class="text-xs bg-white border px-2 py-1 rounded hover:bg-gray-50">New Q</button>
+                    </div>
+                    <p class="mb-6 text-gray-800 text-lg font-medium leading-relaxed">${q.question}</p>`;
+
+                if(q.type === 'chart-gen') {
+                    content += `<div class="h-64 w-full mb-4 bg-white rounded border"><canvas id="${q.chartId}"></canvas></div>`;
+                }
+
+                // Render Options
+                if(q.type === 'mc' || q.type === 'tf' || q.type === 'chart-gen') {
+                    // Shuffle options for MC
+                    const indices = q.options.map((_, i) => i);
+                    // Simple shuffle
+                    for (let i = indices.length - 1; i > 0; i--) {
+                        const j = Math.floor(Math.random() * (i + 1));
+                        [indices[i], indices[j]] = [indices[j], indices[i]];
+                    }
+                    
+                    content += `<div class="grid grid-cols-1 gap-2" id="opts-${qId}">`;
+                    indices.forEach(idx => { // idx is the original index
+                        // Find if this is the correct one
+                        const isCorrect = (idx === q.correct);
+                        content += `<button class="w-full text-left p-4 bg-white border border-blue-200 rounded-lg hover:bg-blue-100 transition font-medium text-gray-700" onclick="app.checkPracticeAnswer(this, ${isCorrect}, '${qId}')">${q.options[idx]}</button>`;
+                    });
+                    content += `</div>`;
+                    
+                    // Hidden Feedback
+                    content += `<div id="feedback-${qId}" class="hidden mt-4 p-4 bg-green-100 text-green-900 rounded-lg border border-green-200">
+                        <strong>Correct!</strong> <span class="block mt-1 text-sm text-gray-700">${q.explanation}</span>
+                    </div>
+                    <div id="feedback-wrong-${qId}" class="hidden mt-4 p-4 bg-red-100 text-red-900 rounded-lg border border-red-200">
+                        <strong>Incorrect.</strong> Try again.
+                    </div>`;
+
+                } else if (q.type === 'frq') {
+                     content += `
+                        <button onclick="document.getElementById('sol-${qId}').classList.remove('hidden')" class="text-blue-600 font-bold text-sm hover:underline">👀 Reveal Solution</button>
+                        <div id="sol-${qId}" class="hidden mt-4 p-4 bg-white rounded border border-gray-200 shadow-inner">
+                            <h4 class="font-bold text-gray-900 mb-2">Solution Step-by-Step:</h4>
+                            <p class="text-gray-700 mb-3 leading-relaxed">${q.solution}</p>
+                            <div class="flex gap-2 mt-4">
+                                <button onclick="app.generatePracticeQuestion()" class="px-4 py-2 bg-blue-600 text-white rounded font-medium hover:bg-blue-700">Next Question &rarr;</button>
+                            </div>
+                        </div>
+                    `;
+                }
+
+                content += `</div>`;
+                card.innerHTML = content;
+                container.appendChild(card);
+
                 if(window.MathJax) MathJax.typesetPromise();
+                
+                if(q.type === 'chart-gen') {
+                    setTimeout(() => {
+                        const ctx = document.getElementById(q.chartId).getContext('2d');
+                        new Chart(ctx, {
+                            type: 'line',
+                            data: {
+                                labels: q.chartData.labels,
+                                datasets: [{
+                                    label: 'f(x)',
+                                    data: q.chartData.data,
+                                    borderColor: '#7c3aed',
+                                    backgroundColor: 'rgba(124, 58, 237, 0.1)',
+                                    borderWidth: 3,
+                                    fill: true,
+                                    tension: 0.4
+                                }]
+                            },
+                            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
+                        });
+                    }, 50);
+                }
             },
 
             checkAnswer(qId, selectedIdx, correctIdx) {
                 const feedbackEl = document.getElementById(`feedback-${qId}`);
                 const optsContainer = document.getElementById(`opts-${qId}`);
                 const buttons = optsContainer.querySelectorAll('button');
-                
-                // Disable buttons
                 buttons.forEach(btn => btn.disabled = true);
                 
                 if(selectedIdx === correctIdx) {
                     buttons[selectedIdx].classList.add('correct');
                     feedbackEl.className = "mt-4 p-3 bg-green-50 border border-green-200 rounded text-green-800 text-sm block";
                     feedbackEl.innerHTML = `<strong>Correct!</strong> ${this.getExplanation(qId)}`;
-                    this.markMastery(qId, true);
+                    this.mastery.add(qId);
+                    this.updateMasteryUI();
                 } else {
                     buttons[selectedIdx].classList.add('wrong');
-                    buttons[correctIdx].classList.add('correct'); // Show correct one
+                    buttons[correctIdx].classList.add('correct');
                     feedbackEl.className = "mt-4 p-3 bg-red-50 border border-red-200 rounded text-red-800 text-sm block";
                     feedbackEl.innerHTML = `<strong>Incorrect.</strong> ${this.getExplanation(qId)}`;
                 }
             },
 
-            markMastery(qId, isCorrect) {
+            checkPracticeAnswer(btn, isCorrect, qId) {
+                const feedbackCorrect = document.getElementById(`feedback-${qId}`);
+                const feedbackWrong = document.getElementById(`feedback-wrong-${qId}`);
+                
                 if(isCorrect) {
-                    this.mastery.add(qId);
+                    btn.classList.remove('bg-white', 'border-blue-200', 'text-gray-700');
+                    btn.classList.add('bg-green-600', 'border-green-700', 'text-white', 'shadow-md');
+                    feedbackCorrect.classList.remove('hidden');
+                    feedbackWrong.classList.add('hidden');
+                    // Disable siblings
+                    const parent = btn.parentElement;
+                    const siblings = parent.querySelectorAll('button');
+                    siblings.forEach(sib => sib.disabled = true);
                 } else {
-                    this.mastery.delete(qId); // Logic for re-testing
+                    btn.classList.remove('bg-white', 'border-blue-200');
+                    btn.classList.add('bg-red-100', 'border-red-300', 'text-red-800');
+                    btn.disabled = true;
+                    feedbackWrong.classList.remove('hidden');
+                    feedbackCorrect.classList.add('hidden');
                 }
+            },
+
+            markMastery(qId, isCorrect) {
+                if(isCorrect) this.mastery.add(qId);
                 this.updateMasteryUI();
-                // Refresh topic score if visible
-                if(this.currentView !== 'overview') this.renderTopic(this.currentView);
             },
 
             getExplanation(qId) {
@@ -526,33 +744,16 @@
                 let totalQ = 0;
                 let masteredQ = this.mastery.size;
                 for(let t in topics) totalQ += topics[t].questions.length;
-                
                 const percentage = Math.round((masteredQ / totalQ) * 100);
-                
-                // Sidebar
                 document.getElementById('sidebar-progress').style.width = `${percentage}%`;
                 document.getElementById('sidebar-progress-text').textContent = `${percentage}%`;
-                
-                // Dashboard
                 document.getElementById('total-score-display').textContent = `${masteredQ}/${totalQ}`;
                 
-                // Update Chart
                 const chart = Chart.getChart("masteryChart");
                 if(chart) {
                     chart.data.datasets[0].data = [masteredQ, totalQ - masteredQ];
                     chart.update();
                 }
-            },
-
-            nextTopic() {
-                const idx = this.topicOrder.indexOf(this.currentView);
-                if(idx < this.topicOrder.length - 1) this.navigate(this.topicOrder[idx+1]);
-                else this.navigate('overview');
-            },
-            prevTopic() {
-                const idx = this.topicOrder.indexOf(this.currentView);
-                if(idx > 0) this.navigate(this.topicOrder[idx-1]);
-                else this.navigate('overview');
             },
 
             renderOverviewCharts() {
@@ -561,7 +762,7 @@
                     data: {
                         labels: ['Mastered', 'Remaining'],
                         datasets: [{
-                            data: [0, 14], // Initial data
+                            data: [0, 14],
                             backgroundColor: ['#2563eb', '#e5e7eb'],
                             borderWidth: 0
                         }]
@@ -570,13 +771,12 @@
                 });
             },
 
-            initChart(chartId) {
+            initStaticChart(chartId) {
                 const ctx = document.getElementById(chartId).getContext('2d');
-                // Avoid recreating if exists
                 if(Chart.getChart(chartId)) return;
-
+                
                 if(chartId === 'chartQ7') {
-                    new Chart(ctx, {
+                     new Chart(ctx, {
                         type: 'line',
                         data: {
                             labels: [0, 1, 2, 3, 4, 5, 6],
@@ -588,7 +788,7 @@
                                 tension: 0.4
                             }]
                         },
-                        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, annotation: { annotations: { line1: { type: 'line', scaleID: 'y', value: 0, borderColor: 'black', borderWidth: 1 } } } } }
+                        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, annotation: { annotations: { line1: { type: 'line', scaleID: 'y', value: 0, borderColor: 'black', borderWidth: 1 } } } }, scales: { y: { grid: { display: false } }, x: { grid: { display: false } } } }
                     });
                 } else if (chartId === 'chartQ12') {
                     new Chart(ctx, {
@@ -621,9 +821,6 @@
                         options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
                     });
                 }
-            },
-            renderAllTopics() {
-                // No-op, we render on demand now to handle IDs correctly
             }
         };
 
