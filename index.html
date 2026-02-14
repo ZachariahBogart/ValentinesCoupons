@@ -5,119 +5,72 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Valentine's Coupons ❤️</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    
+    <script>
+        window.onerror = function(message, source, lineno, colno, error) {
+            alert("⚠️ Script Error: " + message);
+        };
+    </script>
+
     <style>
         :root {
-            --primary: #e91e63; /* Pink */
-            --secondary: #fce4ec; /* Light Pink */
+            --primary: #e91e63;
+            --secondary: #fce4ec;
             --bg: #fafafa;
             --card-bg: #ffffff;
         }
-
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             background-color: var(--bg);
             margin: 0;
             padding: 20px;
             text-align: center;
             color: #333;
         }
-
-        h1 {
-            color: var(--primary);
-            margin-bottom: 10px;
-        }
-
-        p.subtitle {
-            color: #666;
-            margin-bottom: 30px;
-        }
-
-        /* Grid Layout for Coupons */
+        h1 { color: var(--primary); margin-bottom: 10px; }
+        p.subtitle { color: #666; margin-bottom: 30px; }
+        
         .coupon-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
             gap: 15px;
             max-width: 800px;
             margin: 0 auto;
         }
-
-        /* Coupon Card Style */
         .coupon-card {
             background: var(--card-bg);
             border: 2px dashed var(--primary);
             border-radius: 12px;
             padding: 20px;
             cursor: pointer;
-            transition: transform 0.2s, box-shadow 0.2s;
+            transition: transform 0.2s;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             min-height: 120px;
         }
+        .coupon-card:active { transform: scale(0.95); background-color: var(--secondary); }
+        .emoji { font-size: 2.5rem; margin-bottom: 10px; }
+        .title { font-weight: bold; font-size: 1rem; }
 
-        .coupon-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 5px 15px rgba(233, 30, 99, 0.2);
-            background-color: var(--secondary);
-        }
-
-        .emoji {
-            font-size: 2.5rem;
-            margin-bottom: 10px;
-        }
-
-        .title {
-            font-weight: bold;
-            font-size: 1rem;
-        }
-
-        /* Modal (Popup) Styles */
         .modal-overlay {
-            display: none; /* Hidden by default */
+            display: none;
             position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
+            top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0, 0, 0, 0.7);
-            justify-content: center;
-            align-items: center;
+            justify-content: center; align-items: center;
             z-index: 1000;
         }
-
         .modal-content {
-            background: white;
-            padding: 30px;
-            border-radius: 20px;
-            text-align: center;
-            max-width: 90%;
-            position: relative;
-            animation: popIn 0.3s ease;
+            background: white; padding: 30px; border-radius: 20px;
+            text-align: center; max-width: 85%;
         }
-
-        @keyframes popIn {
-            from { transform: scale(0.8); opacity: 0; }
-            to { transform: scale(1); opacity: 1; }
-        }
-
-        #qrcode {
-            margin: 20px auto;
-            display: flex;
-            justify-content: center;
-        }
-
+        #qrcode { margin: 20px auto; display: flex; justify-content: center; }
         .close-btn {
-            background: var(--primary);
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 25px;
-            font-size: 1rem;
-            cursor: pointer;
-            margin-top: 15px;
+            background: var(--primary); color: white; border: none;
+            padding: 10px 20px; border-radius: 25px; font-size: 1rem; margin-top: 15px;
         }
-
     </style>
 </head>
 <body>
@@ -139,32 +92,27 @@
 
     <script>
         // ==========================================
-        // CONFIGURATION SECTION (EDIT THIS)
+        // CONFIGURATION
         // ==========================================
         
-        // 1. Paste your Google Apps Script Web App URL here:
+        // PASTE YOUR URL HERE (Keep the straight quotes "")
         const GOOGLE_SCRIPT_URL = "PASTE_YOUR_WEB_APP_URL_HERE"; 
 
-        // 2. Define your coupons here. 
-        // 'id' must match column A in your Google Sheet exactly.
         const coupons = [
-            { id: "c_massage",   title: "30 Min Massage",  emoji: "💆‍♀️" },
-            { id: "c_dinner",    title: "Dinner Date",     emoji: "🍝" },
-            { id: "c_moviet",    title: "Movie Night (Theater)",     emoji: "🎬" },
-            { id:  "c_movieh",    title: "Movie Night (Home)", emoji: "🍿" },
-            { id: "c_massage",   title: "30 Min Massage",  emoji: "💆‍♀️" },
-            { id: "c_clean",     title: "Room Cleaning",   emoji: "🧹" },
-            { id: "c_breakfast", title: "Breakfast in Bed",emoji: "🥞" },
-            { id: "c_coffee",    title: "Coffee Run",      emoji: "☕" },
-            { id: "c_walk",      title: "Evening Walk",    emoji: "🌲" },
-            { id: "c_yes",       title: "One 'Yes' Day",   emoji: "✨" },
-            { id: "c_moose",     title: "Take Moose Out For 1 Day, emoji: "🫎" },
-            { id: "c_game",      title: "Get Off of Game",  emoji: "🎮" },
-            { id: "c_sleepover",   title: "Sleep Over",  emoji: "🛌" }
+            // Your Custom Coupons
+            { id: "c_moose",      title: "Take Moose Out",  emoji: "🫎" },
+            { id: "c_game",       title: "Get Off of Game", emoji: "🎮" },
+            { id: "c_sleep",      title: "Sleep Over",      emoji: "🛌" },
+            { id: "c_movie_home", title: "Movie Night (Home)", emoji: "🍿" },
+            
+            // Classics (You can keep or delete these)
+            { id: "c_massage",    title: "30 Min Massage",  emoji: "💆‍♀️" },
+            { id: "c_dinner",     title: "Dinner Date",     emoji: "🍝" },
+            { id: "c_yes",        title: "One 'Yes' Day",   emoji: "✨" }
         ];
 
         // ==========================================
-        // END CONFIGURATION
+        // LOGIC
         // ==========================================
 
         const grid = document.getElementById('grid');
@@ -172,7 +120,8 @@
         const qrContainer = document.getElementById('qrcode');
         const modalTitle = document.getElementById('modal-title');
 
-        // Render Coupons
+        if (!grid) { alert("Error: Could not find grid element"); }
+
         coupons.forEach(coupon => {
             const card = document.createElement('div');
             card.className = 'coupon-card';
@@ -180,41 +129,28 @@
                 <div class="emoji">${coupon.emoji}</div>
                 <div class="title">${coupon.title}</div>
             `;
-            // Add click event to open modal
             card.onclick = () => showQR(coupon);
             grid.appendChild(card);
         });
 
         function showQR(coupon) {
-            // Check if URL is set
             if (GOOGLE_SCRIPT_URL.includes("PASTE_YOUR")) {
-                alert("Please configure the Google Script URL in the code!");
+                alert("You forgot to paste your Google Script URL in the code!");
                 return;
             }
-
-            // Set Title
             modalTitle.innerText = coupon.title;
-
-            // Clear previous QR
             qrContainer.innerHTML = "";
-
-            // Construct the redemption URL
-            // When you scan this, it triggers the script
-            const redemptionUrl = `${GOOGLE_SCRIPT_URL}?id=${coupon.id}`;
-
-            // Generate new QR
+            const redemptionUrl = GOOGLE_SCRIPT_URL + "?id=" + coupon.id;
+            
             new QRCode(qrContainer, {
                 text: redemptionUrl,
                 width: 200,
                 height: 200
             });
-
-            // Show Modal
             modal.style.display = 'flex';
         }
 
         function closeModal(event) {
-            // Close if clicking overlay or close button
             if (event.target === modal || event.target.className === 'close-btn') {
                 modal.style.display = 'none';
             }
