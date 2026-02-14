@@ -76,21 +76,30 @@
     </div>
 
     <script>
-        // I split the URL safely so your phone doesn't break it!
+        // ==========================================
+        // CONFIGURATION
+        // ==========================================
+        
+        // We split the URL into two parts to prevent iPhone formatting errors
         const PART_1 = "https://script.google.com/macros/s/AKfycbyCStXncQDrLFZe7GLaQR-";
         const PART_2 = "pshC6xsHmH1zbX-SWcW4Gnh5zXC5kAYMRBTXeG7VP8l6X/exec";
+        
         const GOOGLE_SCRIPT_URL = PART_1 + PART_2;
 
         const coupons = [
-            { id: "c_moose",      title: "Take Moose Out",      emoji: "🫎" },
-            { id: "c_game",       title: "Get Off of Game",     emoji: "🎮" },
-            { id: "c_sleep",      title: "Sleep Over",          emoji: "🛌" },
-            { id: "c_movie_home", title: "Movie Night (Home)",  emoji: "🍿" },
+            // Your Custom Coupons
+            { id: "c_moose",      title: "Take Moose Out",  emoji: "🫎" },
+            { id: "c_game",       title: "Get Off of Game", emoji: "🎮" },
+            { id: "c_sleep",      title: "Sleep Over",      emoji: "🛌" },
+            { id: "c_movie_home", title: "Movie Night (Home)", emoji: "🍿" },
             { id: "c_movie_t",    title: "Movie Night (Theater)", emoji: "🎬" },
-            { id: "c_massage",    title: "30 Min Massage",      emoji: "💆‍♀️" },
-            { id: "c_dinner",     title: "Dinner Date",         emoji: "🍝" },
-            { id: "c_yes",        title: "One 'Yes' Day",       emoji: "✨" }
+            
+            // Classics
+            { id: "c_massage",    title: "30 Min Massage",  emoji: "💆‍♀️" },
+            { id: "c_dinner",     title: "Dinner Date",     emoji: "🍝" },
+            { id: "c_yes",        title: "One 'Yes' Day",   emoji: "✨" }
         ];
+
 
         const grid = document.getElementById('grid');
         const modal = document.getElementById('modal');
